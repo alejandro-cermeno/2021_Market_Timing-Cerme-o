@@ -1,1 +1,1 @@
-# Market Timing Approaches: Evidence for Latin American Stock Markets
+# Testing Efficient Market Hypothesis in Latin American Stock Markets with Market Timing Models
