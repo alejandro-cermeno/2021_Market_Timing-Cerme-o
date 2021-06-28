@@ -1,6 +1,7 @@
 # En desarrollo...
 
 Los siguientes archivos replican los resultados obtenidos en 2021_Market_Timing-Cermeno:
+
 Versión de junio 2021
 
 
