@@ -2,14 +2,14 @@
 
 The following files replicate the results in 'Title in progress'
 
-* returns_descriptive_.ipynb replicates Table 1 and Figure 1
+* returns_figure_descriptive.ipynb replicates Figure 1 and Table 1
 
-* models.ipynb replicates Table 1 and Figure 1
+* models.ipynb replicates Table 2
+
+
+
 
 #=========
-
-
-
 Referencia:
 %The following files replicate the empirical results in: 
 %Chen, Rogoff and Rossi,  
