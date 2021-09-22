@@ -1,5 +1,5 @@
 '''
-forecastVolVaR.py
+forecastVolVaR_v5.py
 
 Alejandro Cermeño (09/2021)
 
@@ -67,43 +67,47 @@ def name2disp(especificacion):
   el nombre de la especificación a mostrarse.
   '''
 
+  name2disp_ = ''
+  
   # Nomnbre especificacion de la media
-
+  
   if especificacion == 'Zero':
-    name2disp = 'Cero'
+    name2disp_ = 'Cero'
   elif especificacion == 'Constant':
-    name2disp = 'Constante'
+    name2disp_ = 'Constante'
   elif especificacion == 'AR':
-    name2disp = 'AR'
+    name2disp_ = 'AR'
 
   # Nombre modelo de la varianza
 
   elif especificacion == arch_params:
-    name2disp = 'ARCH'
+    name2disp_ = 'ARCH'
   elif especificacion == garch_params:
-    name2disp = 'GARCH'
+    name2disp_ = 'GARCH'
   elif especificacion == grj_params:
-    name2disp = 'GJR'
+    name2disp_ = 'GJR'
   elif especificacion == egarch_params:
-    name2disp = 'EGARCH'
+    name2disp_ = 'EGARCH'
   elif especificacion == aparch_params:
-    name2disp = 'APARCH'
+    name2disp_ = 'APARCH'
+  elif especificacion == figarch_params:
+    name2disp_ = 'FIGARCH'
 
   # Nombre de la distribucion
 
   elif especificacion == 'normal':
-    name2disp = 'N'
+    name2disp_ = 'N'
   elif especificacion == 't':
-    name2disp = 't'
+    name2disp_ = 't'
   elif especificacion == 'skewt':
-    name2disp = 'skt'
+    name2disp_ = 'skt'
   elif especificacion == 'ged':
-    name2disp = 'GED'
+    name2disp_ = 'GED'
 
   else:
-    name2disp = 'Especificacion no valida'
+    name2disp_ = 'Especificacion no valida'
 
-  return name2disp
+  return name2disp_
 
 
 def signif_ast(coef, pvalues):
@@ -173,22 +177,23 @@ returns = r_forex.join(r_stocks)
 
 # Media
 
-mean_ops      = ['Zero', 'Constant', 'AR'] 
+mean_ops       = ['Zero', 'Constant', 'AR'] 
 
 # Varianza
 
-arch_params   = {'vol': 'ARCH'}
-garch_params  = {'p':1, 'q':1, 'vol':'GARCH'}
-grj_params    = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}
-egarch_params = {'p': 1, 'q': 1, 'o': 1, 'vol': 'EGARCH'}
-aparch_params = {'p':1, 'o':1, 'q':1, 'power': 2.0, 'vol':'GARCH'}
+arch_params    = {'vol': 'ARCH'}
+garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}
+grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}
+egarch_params  = {'p': 1, 'q': 1, 'o': 1, 'vol': 'EGARCH'}
+aparch_params  = {'p':1, 'o':1, 'q':1, 'power': 2.0, 'vol':'GARCH'}
+figarch_params = {'p':1, 'q':1, 'power': 2.0, 'vol':'FIGARCH'}
 
 variance_ops  = [arch_params, garch_params, grj_params, egarch_params, 
-                 aparch_params]
+                 aparch_params, figarch_params]
 
 # Distribuciones
 
-dist_ops    = ['normal', 't', 'skewt', 'ged']
+dist_ops     = ['normal', 't', 'skewt', 'ged']
 
 # Horizontes de proyeccion
 
@@ -196,7 +201,7 @@ h = 1 #, 5, 10]
 
 # Parametros
 
-ts = returns.iloc[:, 0].dropna() # Serie a utilizar
+ts = returns.iloc[:, 0].dropna()[:400] # Serie a utilizar
 win_size = 250
 n_preds  = len(ts) - win_size - 1
 
@@ -219,12 +224,15 @@ for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
     start_model = time.time() # Inicio cronometro para cada modelo
 
 
-    # Especificacion y estimacion del modelo
-    mdl = arch_model(window, mean = mean, **variance, dist = dist).fit(disp =
-                                                                       'off')
+    # Especificacion
+    mdl = arch_model(window, mean = mean, **variance, dist = dist, 
+                     rescale = False)
+
+    # Estimacion
+    fit = mdl.fit(disp = 'off')
 
     # Proyeccion
-    pred = mdl.forecast(horizon = h, reindex = True)
+    pred = fit.forecast(horizon = h, reindex = True)
 
 
     # Valores resultados
@@ -233,20 +241,27 @@ for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
     mean_pred = pred.mean.dropna().iloc[0, 0]      # Media proyectada
     var_pred  = pred.variance.dropna().iloc[0, 0]  # Varianza proyectada (sigma^2)
     vol_pred  = np.sqrt(var_pred)                  # Vol. proyectada (sigma)
-    vol_true  = abs(ts[win_size  + i + 1])         # Vol. realizada (|r|) 
-    cond_vol  = mdl.conditional_volatility         # Vol. condicional
+    vol_true  = abs(ts[win_size  + i + 1])         # Vol. realizada (|r|)
 
+    # Proyeccion del Value at Risk #
+    # VaR parametrico
 
-    # Proyeccion del Value at Risk
+    dist_params_ops = ['nu', 'eta', 'lambda']
 
-    try:
-      mdl.params['mu']
-    except KeyError:
-      mdl.params['mu'] = 0
+    dist_params = list()
 
-    std_rets = ( (window - mdl.params['mu']) / cond_vol ).dropna()
-    q        = std_rets.quantile([0.01, 0.05, 0.1])
-    VaR      = - mean_pred - vol_pred * q.values[None, :]
+    for param in dist_params_ops:
+      try:
+        dist_params.append(fit.params[param])
+
+      except KeyError:
+        pass
+
+    # Cuantil. Syntax: Distribution.ppf(pits, parameters=None)
+    q = mdl.distribution.ppf([0.01, 0.05], dist_params)
+
+    # Value at Risk
+    VaR = - mean_pred - vol_pred * q[None, :]
 
 
     # Tabla de resultados para un modelo en específico
@@ -255,52 +270,47 @@ for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
     # (h), fecha, proyeccion media, volatilidad realizada (|r|), volatilidad
     # proyectada, VaR [1%, 5%, 10%], BIC, loglik, coeficientes.
 
-    mdl_info2t = model_info_fun(ts, mean, variance, dist)
+    mdl_info2t = model_info_fun(ts, mean, variance, dist) # Media, var. y dist.
 
-    h2t = pd.Series(h, index = ['h'])
+    h2t = pd.Series(h, index = ['h']) 
 
     date2t = pd.Series(ts.index[win_size  + i + 1], index = ['date']) 
 
-    mean_true2t = pd.Series(mean_true, index = ['mean_true'])
+    mean_true2t = pd.Series(mean_true, index = ['mean_true']) 
 
-    mean_pred2t = pd.Series(mean_pred, index = ['mean_pred'])
+    mean_pred2t = pd.Series(mean_pred, index = ['mean_pred']) 
 
-    var_pred2t = pd.Series(var_pred, index = ['var_pred'])
+    var_pred2t = pd.Series(var_pred, index = ['var_pred']) 
 
-    vol_true2t = pd.Series(vol_true, index = ['vol_true'])
+    vol_true2t = pd.Series(vol_true, index = ['vol_true']) 
 
     vol_pred2t = pd.Series(vol_pred, index = ['vol_pred'])
                       
-    VaR2t = pd.Series(VaR.ravel(), index = ['VaR_1', 'VaR_5', 'VaR_10'])
+    VaR2t = pd.Series(VaR.ravel(), index = ['VaR_1', 'VaR_5']) 
 
-    bic2t = pd.Series(mdl.bic, index = ['BIC'])
 
-    loglik2t = pd.Series(mdl.loglikelihood, index = ['loglik'])
-
-    end_model = time.time() # Fin cronometro cada modelo
+    end_model = time.time()                   # Fin cronometro cada modelo
     time_model = str(end_model - start_model) # Tiempo ejecucion  
     time_model2t = pd.Series(time_model, index = ['time'])
 
-    #coef = signif_ast(round(mdl.params, 3), mdl.pvalues).T
 
     to_forecastVolVaR = pd.concat([mdl_info2t, h2t, date2t, mean_true2t,
                                    mean_pred2t, vol_true2t, vol_pred2t,
-                                   VaR2t, bic2t, loglik2t, time_model2t])
+                                   VaR2t, time_model2t])
     
     to_forecastVolVaR = pd.DataFrame(to_forecastVolVaR).T
-    #to_forecastVolVaR = to_forecastVolVaR.assign(**coef)
 
     # Se anexa a la tabla de resultados
 
     globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'] = globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'].append(to_forecastVolVaR,
-                                                                                                                                             sort = False)
-
+                                                                                                                                             sort = False, 
+                                                                                                                                             )
 # Se exporta la tabla de resultados
 
 export(globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'], ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS', Excel = True)
 
-print('Excel ' + ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS.xlsx \
-guardado con exito')
+print('El Excel ' + ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS.xlsx \
+ha sido guardado con exito')
 
 
 end_code = time.time() # Fin cronometro
