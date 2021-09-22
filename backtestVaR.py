@@ -1,3 +1,16 @@
+'''
+backtestVaR.py
+
+Alejandro Cermeño (09/2021)
+
+El código aplica las pruebas de backtest de Kupiec (1995) y Christoffesen (1998)
+en las proyecciones del VaR al 99%, 95% de confianza realizadas. También se calcula el MAE y MSE 
+para las proyecciones de la volatilidad respecto a la volatilidad realizada (|r|). Se requieren las 
+librerias pandas, datetime e itertools.
+
+Se omiten las tildes. Ver README.txt para informacion adicional.
+'''
+
 # Librerias 
 
 import pandas as pd 
