@@ -1,14 +1,3 @@
-"""
-arch_model_v2() is an adaptation of the arch_model() function of Sheppard 
-(2021) to the needs of this research.
-
-The original function:
-https://arch.readthedocs.io/en/latest/univariate/introduction.html#arch.univariate.arch_model
-
-The modified function:
-https://github.com/alejandro-cermeno/2021_Market_Timing-Cermeno/blob/main/arch_model_v2.py
-"""
-
 from __future__ import annotations
 
 import copy
@@ -27,10 +16,34 @@ from typing import (
     cast,
 )
 
+
+from arch.univariate.mean import (
+    ZeroMean,
+    ConstantMean,
+    ARX
+)
+
+from arch.univariate.volatility import (
+    ARCH,
+    GARCH,
+    EGARCH,
+    FIGARCH,
+    APARCH
+)
+
+from arch.univariate.distribution import (
+    GeneralizedError,
+    Normal,
+    SkewStudent,
+    StudentsT,
+)
+
+
 import numpy as np
 from pandas import DataFrame, Index
 from scipy.optimize import OptimizeResult
 from statsmodels.tsa.tsatools import lagmat
+
 
 def arch_model_v2(
     y: Optional[ArrayLike],
