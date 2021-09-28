@@ -1,3 +1,13 @@
+"""
+arch_model_v2 () is an adaptation of the arch_model () function by the author Sheppard (2021) to the needs of this research.
+
+The original function:
+https://arch.readthedocs.io/en/latest/univariate/introduction.html#arch.univariate.arch_model
+
+The modified function:
+https://github.com/alejandro-cermeno/2021_Market_Timing-Cermeno/blob/main/arch_model_v2.py
+"""
+
 from __future__ import annotations
 
 import copy
