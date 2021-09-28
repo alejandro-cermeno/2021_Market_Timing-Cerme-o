@@ -9,6 +9,29 @@ The modified function:
 
 """
 
+from __future__ import annotations
+
+import copy
+import sys
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
+
+import numpy as np
+from pandas import DataFrame, Index
+from scipy.optimize import OptimizeResult
+from statsmodels.tsa.tsatools import lagmat
+
 def arch_model_v2(
     y: Optional[ArrayLike],
     x: Optional[ArrayLike] = None,
