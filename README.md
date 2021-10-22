@@ -1,4 +1,11 @@
-## ARCH models for Value at Risk forecasting in Latin American stock and Forex markets
+# ARCH models for Value at Risk forecasting in Latin American stock and Forex markets
+
+#### This is the electronic Appendix that allows you to replicate the results tables and access to the full results.
+
+
+Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.Abstract.
+
+## Module Contents
 
 * code: codes to replicate results in draft.pdf
   * data.xlsx: source data used as obtained from Bloomberg.
