@@ -1,11 +1,15 @@
 '''
 modelingVol_params.py
+
 Alejandro Cermeño (09/2021)
+
 Este codigo genera y exporta la tabla de coeficientes estimados
 (modelingVol_params.xlsx y modelingVol_params.tex) para los modelos y series 
 especificados. La diferencia entre ambos archivos está en la denominacion de la
-significancia en letras (a,b,c) o en asteriscos (***,**,*). Se requiere los 
-paquetes time, numpy, pandas, datetime, itertools y arch.
+significancia en letras (a,b,c) o en asteriscos (***,**,*). Además, se 
+guarda el resumen de resultados de cada modelo en modelingVol_summary.txt.
+Se requiere los paquetes time, numpy, pandas, datetime, itertools y arch.
+
 Se omiten las tildes. Ver README.txt para informacion adicional.
 '''
 
@@ -20,6 +24,7 @@ import pandas as pd
 from datetime  import timedelta
 from itertools import product 
 from arch      import arch_model
+from arch.__future__ import reindexing
 
 start = time.time()  # Inicio cronometro 
 
@@ -62,40 +67,44 @@ def name2disp(especificacion):
   # Nomnbre especificacion de la media
 
   if especificacion == 'Zero':
-    name2disp = 'Cero'
+    name2disp_ = 'Cero'
   elif especificacion == 'Constant':
-    name2disp = 'Constante'
+    name2disp_ = 'Constante'
   elif especificacion == 'AR':
-    name2disp = 'AR'
+    name2disp_ = 'AR'
 
   # Nombre modelo de la varianza
 
   elif especificacion == arch_params:
-    name2disp = 'ARCH'
+    name2disp_ = 'ARCH'
   elif especificacion == garch_params:
-    name2disp = 'GARCH'
+    name2disp_ = 'GARCH'
   elif especificacion == grj_params:
-    name2disp = 'GJR'
+    name2disp_ = 'GJR'
+  #elif especificacion == tarch_params:
+  #  name2disp_ = 'TARCH'
   elif especificacion == egarch_params:
-    name2disp = 'EGARCH'
+    name2disp_ = 'EGARCH'
   elif especificacion == aparch_params:
-    name2disp = 'APARCH'
+    name2disp_ = 'APARCH'
+  elif especificacion == figarch_params:
+    name2disp_ = 'FIGARCH'
 
   # Nombre de la distribucion
 
   elif especificacion == 'normal':
-    name2disp = 'N'
+    name2disp_ = 'N'
   elif especificacion == 't':
-    name2disp = 't'
+    name2disp_ = 't'
   elif especificacion == 'skewt':
-    name2disp = 'skt'
+    name2disp_ = 'skt'
   elif especificacion == 'ged':
-    name2disp = 'GED'
+    name2disp_ = 'GED'
 
   else:
-    name2disp = 'Especificacion no valida'
+    name2disp_ = 'Especificacion no valida'
 
-  return name2disp
+  return name2disp_
 
 
 def signif_ast(coef, pvalues):
@@ -167,7 +176,7 @@ def model_info_fun(ts, mean, variance, dist):
 # Obtencion de datos #
 ######################
 
-path = 'https://git.io/JuGLW'
+path = 'https://git.io/J6hzs'
 
 # Series del mercado bursatil
 
@@ -182,28 +191,31 @@ r_forex = price2ret(forex)
 returns = r_forex.join(r_stocks)
 
 
-####################
-# Especificaciones #
-####################
+##################
+# Specifications #
+##################
 
-# Media
+# Mean specifications
 
-mean_ops      = ['Zero', 'Constant', 'AR']
+mean_ops       = ['Zero', 'Constant', 'AR'] 
 
-# Varianza
+# Variance models
 
-arch_params   = {'vol': 'ARCH'}
-garch_params  = {'p':1, 'q':1, 'vol':'GARCH'}
-grj_params    = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}
-egarch_params = {'p': 1, 'q': 1, 'o': 1, 'vol': 'EGARCH'}
-aparch_params = {'p':1, 'o':1, 'q':1, 'power': 2.0, 'vol':'GARCH'}
+arch_params    = {'vol':'ARCH'}                               # ARCH
+garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}                # GARCH  
+grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}         # GRJ
+#tarch_params   = {'p':1, 'o':1, 'q':1, 'power':1.0}          # TARCH or ZARCH
+#egarch_params  = {'p':1, 'q':1, 'o':1, 'vol': 'EGARCH'}      # EGARCH
+aparch_params  = {'p':1, 'o':1, 'q':1, 'vol':'APARCH'}        # APARCH
+figarch_params = {'p':1, 'q':1, 'power':2.0, 'vol':'FIGARCH'} # FIGARCH
 
-variance_ops     = [arch_params, garch_params, grj_params, egarch_params, 
-                    aparch_params]
+variance_ops  = [arch_params, garch_params, grj_params, aparch_params,
+                 figarch_params]
 
-# Distribuciones
+# Distributions
 
-dist_ops      = ['normal', 't', 'skewt', 'ged']
+dist_ops     = ['normal', 't', 'skewt', 'ged']
+
 
 # Almacenar resultados
 
@@ -220,11 +232,19 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
 
     ts = returns[market].dropna()
 
-    # Se verifica si el modelo especificado tiene solucion (try)
+    # Se verifica si el modelo especificado tiene solucion
     try:
 
         # Especificacion y estimacion del modelo
-        mdl = arch_model(ts, mean = mean, **variance, dist = dist).fit(disp='off')
+        mdl = arch_model_v2(ts, mean = mean, **variance, dist = dist, 
+                            rescale = False).fit(disp='off')
+
+        # Save summary models results
+
+        with open("modelingVol_summary.txt", "a+") as file_object:
+          file_object.write(str(mdl))
+          file_object.write("\n")
+          file_object.write("\n")
 
 
         # Resultados si el modelo tiene solucion
@@ -233,21 +253,19 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         model_info = model_info_fun(ts, mean, variance, dist)
 
         # P-values
-        pvalues = round(mdl.pvalues, 3)
+        pvalues = mdl.pvalues
 
         # Coeficientes
-        coef = round(mdl.params, 3)
+        coef = mdl.params.map('{:,.4f}'.format) # set 4 decimals precision
 
         coef_letter = pd.DataFrame(signif_letter(coef, pvalues))
         coef_ast = pd.DataFrame(signif_ast(coef, pvalues))
 
         # Log-verosimilutud
-        loglik = round(mdl.loglikelihood, 3)
-        loglik = pd.Series(loglik, index = ['log-lik'])
+        loglik = pd.Series(mdl.loglikelihood, index = ['log-lik'])
 
         # Valor del criterio de informacion
-        bic = round(mdl.bic, 3)
-        bic = pd.Series(bic, index = ['BIC'])
+        bic = pd.Series(mdl.bic, index = ['BIC'])
 
         # Singular Matrix (0 = el modelo pudo ser estimado)
         singular_matrix = pd.Series('0', index = ['Singular Matrix'])
@@ -255,7 +273,7 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         #  Tablas resultado 
 
         # Tabla para LaTeX (significancia con letras)
-        to_latex = pd.concat([model_info, coef_letter, bic, loglik, singular_matrix]) 
+        #to_latex = pd.concat([model_info, coef_letter, bic, loglik, singular_matrix]) 
               
         # Tabla para Excel (significancia con asteriscos)
         to_excel = pd.concat([model_info,coef_ast, bic, loglik, singular_matrix]) 
@@ -274,52 +292,69 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         # Valores para las otras columnas (parametros, BIC, etc) en blanco
         
         #  Tablas resultado 
-        to_latex = pd.concat([model_info, singular_matrix])
+        #to_latex = pd.concat([model_info, singular_matrix])
         to_excel = pd.concat([model_info, singular_matrix])
         
         
     # Se anexa la fila a las tablas de resultados (append)
       
     to_excel = pd.DataFrame(to_excel).T
-    to_latex = pd.DataFrame(to_latex).T
+    #to_latex = pd.DataFrame(to_latex).T
         
     modelingVol_params_excel = modelingVol_params_excel.append(to_excel, 
-                                                                   sort = False, 
-                                                                   ignore_index = True)
+                                                                sort = False, 
+                                                                ignore_index = True)
         
-    modelingVol_params_latex = modelingVol_params_latex.append(to_latex, 
-                                                                   sort = False,
-                                                                   ignore_index = True)
+    #modelingVol_params_latex = modelingVol_params_latex.append(to_latex, 
+    #                                                           sort = False,
+    #                                                           ignore_index = True)
 
 
-#######################################
-# Formato y exportacion de resultados #
-#######################################
+##########################################
+# Organizacion de la tabla de resultados #
+##########################################
 
 # Remplazar NaN por espacios en blanco
 
 modelingVol_params_excel = modelingVol_params_excel.fillna('')
-modelingVol_params_latex = modelingVol_params_latex.fillna('')
+#modelingVol_params_latex = modelingVol_params_latex.fillna('')
 
-# Ordenar las columnas
+# Join columns: d with delta, nu with eta, Const with mu, beta[1] with beta
 
-col_names = list(modelingVol_params_excel.columns)
+modelingVol_params_excel['delta'] = modelingVol_params_excel['delta'] +\
+modelingVol_params_excel['d']
+modelingVol_params_excel['mu'] = modelingVol_params_excel['mu'] +\
+modelingVol_params_excel['Const']
+modelingVol_params_excel['nu'] = modelingVol_params_excel['nu'] +\
+modelingVol_params_excel['eta']
 
-right_columns =  ['BIC',  'log-lik', 'Singular Matrix']
-left_columns = [l for l in col_names if l not in right_columns]
+modelingVol_params_excel.drop(['Const', 'eta', 'd'], axis=1)
 
-col_order = left_columns + right_columns
+# Rename columns
 
+modelingVol_params_excel.rename(columns = {'alpha[1]':'alpha',
+                                           'beta[1]':'beta',
+                                           'gamma[1]':'gamma'},
+                                inplace = True)
+
+# Columns order
+
+col_order = ['serie', 'mean', 'variance', 'dist', 'mu', 'omega', 'alpha',
+             'beta', 'gamma', 'delta', 'phi', 'nu', 'lambda', 'BIC', 'log-lik', 
+             'Singular Matrix']
+              
 modelingVol_params_excel = modelingVol_params_excel[col_order]
-modelingVol_params_latex = modelingVol_params_latex[col_order]
 
-# Exportar tablas de resultados 
+
+#############################
+# Exportacion de resultados #
+#############################
 
   # A Excel
 export(modelingVol_params_excel, 'modelingVol_params', Excel = True)
 
   # A LaTeX
-export(modelingVol_params_latex, 'modelingVol_params', LaTeX = True)
+#export(modelingVol_params_latex, 'modelingVol_params', LaTeX = True)
 
 
 # Se finaliza el codigo 
