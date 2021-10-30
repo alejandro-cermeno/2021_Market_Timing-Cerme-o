@@ -1,7 +1,8 @@
 """
 descriptiveStats.py
 Alejandro Cermeño (09/2021)
-This code replicates Table 1: Descriptive Statistics for Stock and Forex Markets Returns (descriptive_stats_ret.tex). It requires time, numpy, pandas, and datetime.
+This code replicates Table 1: Descriptive Statistics for Stock and Forex Markets
+Returns (descriptive_stats_ret.tex). It requires time, numpy, pandas, and datetime.
 
 See README.txt for additional information.
 """
