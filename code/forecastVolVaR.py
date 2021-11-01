@@ -13,11 +13,6 @@ The time, numpy, pandas, datetime, itertools, and arch libraries are required.
 See README.txt for additional information.
 '''
 
-
-#############
-# Librerias #
-#############
-
 import time
 import numpy as np
 import pandas as pd
@@ -28,17 +23,15 @@ from arch import arch_model
 from arch.__future__ import reindexing
 
 
-start_code = time.time()  # Inicio cronometro para todo el codigo
+start_code = time.time() # stopwatch start 
 
 
 #############
-# Funciones #
+# Functions #
 #############
 
 def price2ret(price):
-  
   ret = (100 * (np.log(price) - np.log(price.shift(1))))
-  
   return ret
 
 
@@ -110,40 +103,17 @@ def name2disp(especificacion):
 
 
 def signif_ast(coef, pvalues):
- 
-  signif_ast = list()
-
-  for p in range(len(pvalues)):
-    if pvalues[p] <= 0.01:
-      asterisco = '***' # significativo al 1%                
-    elif pvalues[p] <= 0.05:                
-      asterisco = '**'  # significativo al 5%                   
-    elif pvalues[p] <= 0.1:
-      asterisco = '*'   # significativo al 10%                    
-    else:
-      asterisco = ''    # no significativo     
-
-    valor = str(coef[p]) + asterisco # Se une el coeficiente y el asterisco
-
-    signif_ast.append(valor)
-
-  signif_ast = pd.DataFrame(signif_ast, index = coef.index)
-  
-  return signif_ast 
 
 
 def model_info_fun(ts, mean, variance, dist):
     
   # Serie
   serie_name = pd.Series(ts.name, index = ['serie'])
-
-  # Media
+  # Mean
   media_name = pd.Series(name2disp(mean), index = ['mean'])
-
-  # Varianza
+  # Variance
   varianza_name = pd.Series(name2disp(variance), index=['variance'])
-
-  # Distribucion
+  # Distribution
   dist_name = pd.Series(name2disp(dist), index = ['dist'])
 
   info = pd.concat([serie_name, media_name, varianza_name, dist_name])
@@ -151,56 +121,53 @@ def model_info_fun(ts, mean, variance, dist):
   return info
 
 
-######################
-# Obtencion de datos #
-######################
+###################
+# Data collection #
+###################
 
 path = 'https://git.io/JuGLW'
 
-  # Series del mercado bursatil
-
+# Stock market data
 stocks  = pd.read_excel(path, sheet_name = 'stocks_raw', index_col = 0)
 r_stocks = price2ret(stocks)
 
-  # Series del mercado cambiario
-  
+# Forex market data  
 forex  = pd.read_excel(path, sheet_name = 'forex_raw', index_col = 0)
-r_forex = price2ret(forex)
+r_forex = 100 * (np.log(forex) - np.log(forex.shift(1)))
 
 returns = r_forex.join(r_stocks)
 
 
-####################
-# Especificaciones #
-####################
+##################
+# Specifications #
+##################
 
-# Media
+# Mean specifications
 
 mean_ops       = ['Zero', 'Constant', 'AR'] 
 
-# Varianza
+# Variance models
 
-arch_params    = {'vol': 'ARCH'}
-garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}
-grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}
-egarch_params  = {'p': 1, 'q': 1, 'o': 1, 'vol': 'EGARCH'}
-aparch_params  = {'p':1, 'o':1, 'q':1, 'power': 2.0, 'vol':'GARCH'}
-figarch_params = {'p':1, 'q':1, 'power': 2.0, 'vol':'FIGARCH'}
+arch_params    = {'vol':'ARCH'}                               # ARCH
+garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}                # GARCH  
+grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}         # GRJ
+#tarch_params   = {'p':1, 'o':1, 'q':1, 'power':1.0}          # TARCH  (not included)
+#egarch_params  = {'p':1, 'q':1, 'o':1, 'vol': 'EGARCH'}      # EGARCH (not included)
+aparch_params  = {'p':1, 'o':1, 'q':1, 'vol':'APARCH'}        # APARCH
+figarch_params = {'p':1, 'q':1, 'power':2.0, 'vol':'FIGARCH'} # FIGARCH
 
-variance_ops  = [arch_params, garch_params, grj_params, egarch_params, 
-                 aparch_params, figarch_params]
+variance_ops  = [arch_params, garch_params, grj_params, aparch_params,
+                 figarch_params]
 
-# Distribuciones
+# Distributions
 
 dist_ops     = ['normal', 't', 'skewt', 'ged']
 
-# Horizontes de proyeccion
+h = 1 #, 5, 10] # forecasts horizons
 
-h = 1 #, 5, 10]
+# parameters
 
-# Parametros
-
-ts = returns.iloc[:, 0].dropna()[:400] # Serie a utilizar
+ts = returns.iloc[:, 0].dropna() # serie to use
 win_size = 250
 n_preds  = len(ts) - win_size - 1
 
@@ -208,42 +175,42 @@ n_preds  = len(ts) - win_size - 1
 # Proyeccion volatilidad y VaR #
 ################################
 
-# Se guardan los resultados en la variable 'serie'_forecastVolVaR_'n_preds'_OOS
-# MERVAL_forecastVolVaR_1250_OOS, por ejemplo
+# The results are saved in the variable 'serie'_forecastVolVaR_'n_preds'_OOS
+# MERVAL_forecastVolVaR_1250_OOS, for example
 
 globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'] = pd.DataFrame()
 
 for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
 
-  # Ventana movil
+  # Rolling window
   for i in range(0, n_preds, h): # syntax: range(start, stop, step)
 
     window = ts[0 + i : win_size  + i]
 
-    start_model = time.time() # Inicio cronometro para cada modelo
+    start_model = time.time() # stopwatch for each model
 
 
-    # Especificacion
+    # model specification
     mdl = arch_model(window, mean = mean, **variance, dist = dist, 
                      rescale = False)
 
-    # Estimacion
+    # model estimation
     fit = mdl.fit(disp = 'off')
 
-    # Proyeccion
+    # forecast
     pred = fit.forecast(horizon = h, reindex = True)
 
 
     # Valores resultados
 
-    mean_true = ts[win_size  + i + 1]              # Media realizada 
-    mean_pred = pred.mean.dropna().iloc[0, 0]      # Media proyectada
-    var_pred  = pred.variance.dropna().iloc[0, 0]  # Varianza proyectada (sigma^2)
-    vol_pred  = np.sqrt(var_pred)                  # Vol. proyectada (sigma)
-    vol_true  = abs(ts[win_size  + i + 1])         # Vol. realizada (|r|)
+    mean_true = ts[win_size  + i + 1]              # realized mean 
+    mean_pred = pred.mean.dropna().iloc[0, 0]      # forecasted men (when AR(1))
+    var_pred  = pred.variance.dropna().iloc[0, 0]  # forecasted variance (sigma^2)
+    vol_pred  = np.sqrt(var_pred)                  # forecasted vol. (sigma)
+    vol_true  = abs(ts[win_size  + i + 1])         # realized vol. (|r|)
 
-    # Proyeccion del Value at Risk #
-    # VaR parametrico
+    # Value at Risk forecast #
+    # parametric VaR
 
     dist_params_ops = ['nu', 'eta', 'lambda']
 
@@ -263,33 +230,26 @@ for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
     VaR = - mean_pred - vol_pred * q[None, :]
 
 
-    # Tabla de resultados para un modelo en específico
+    # Results table for a specific model
+    
+    # Columns: series, mean, variance, distribution, forecast horizon (h), date,
+    # forecasted mean, realized volatility (|r|), volatility forecasted, 
+    # VaR [1%, 5%, 10%], BIC, loglik, coefficients
 
-    # Columnas: serie, media, varianza, distribucion, horizonte de proyeccion
-    # (h), fecha, proyeccion media, volatilidad realizada (|r|), volatilidad
-    # proyectada, VaR [1%, 5%, 10%], BIC, loglik, coeficientes.
-
-    mdl_info2t = model_info_fun(ts, mean, variance, dist) # Media, var. y dist.
+    mdl_info2t = model_info_fun(ts, mean, variance, dist) # mean, var. and dist.
 
     h2t = pd.Series(h, index = ['h']) 
-
     date2t = pd.Series(ts.index[win_size  + i + 1], index = ['date']) 
-
     mean_true2t = pd.Series(mean_true, index = ['mean_true']) 
-
     mean_pred2t = pd.Series(mean_pred, index = ['mean_pred']) 
-
     var_pred2t = pd.Series(var_pred, index = ['var_pred']) 
-
     vol_true2t = pd.Series(vol_true, index = ['vol_true']) 
-
     vol_pred2t = pd.Series(vol_pred, index = ['vol_pred'])
-                      
     VaR2t = pd.Series(VaR.ravel(), index = ['VaR_1', 'VaR_5']) 
 
 
-    end_model = time.time()                   # Fin cronometro cada modelo
-    time_model = str(end_model - start_model) # Tiempo ejecucion  
+    end_model = time.time()                   # end stopwatch each model
+    time_model = str(end_model - start_model) # excecution time  
     time_model2t = pd.Series(time_model, index = ['time'])
 
 
@@ -299,12 +259,11 @@ for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
     
     to_forecastVolVaR = pd.DataFrame(to_forecastVolVaR).T
 
-    # Se anexa a la tabla de resultados
-
+    # Is attached to the results table
     globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'] = globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'].append(to_forecastVolVaR,
                                                                                                                                              sort = False, 
                                                                                                                                              )
-# Se exporta la tabla de resultados
+# The results table is exported
 
 export(globals()[ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS'], ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS', Excel = True)
 
@@ -312,8 +271,8 @@ print('El Excel ' + ts.name + '_forecastVolVaR_' + str(n_preds) + '_OOS.xlsx \
 ha sido guardado con exito')
 
 
-end_code = time.time() # Fin cronometro
-time_code = str(timedelta(seconds = round(end_code - start_code))) # Tiempo ejecucion
+end_code = time.time() # End stopwatch
+time_code = str(timedelta(seconds = round(end_code - start_code))) # Excecution time
 
-print('Ejecucion finalizada')
-print('Tiempo de ejecución: ', time_code)
+print('Execution completed')
+print('Execution time: ', time_code)
