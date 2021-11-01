@@ -32,7 +32,7 @@ def export(df, file_name, excel = None, latex = None):
   # To Excel
   if excel == True:
     df.to_excel(file_name + '.xlsx')  
-    
+        
   # To LaTeX
   if latex == True:
     latex_code = df.to_latex()
