@@ -1,14 +1,16 @@
 '''
 forecastVolVaR_v5.py
 Alejandro Cermeño (09/2021)
-Este codigo realiza proyecciones un periodo hacia adelante de la volatilidad 
-de cada serie ingresada mediante 60 modelos ARCH. Estos consideran tres 
-especificaciones de la media (cero, constante y autoregresiva), cinco de la 
-varianza (ARCH, GARCH, GJR, EGARCH y APARCH), y cuatro distribuciones (normal,
-t-student, t-student sesgada y GED). Así mismo, con las proyecciones de la 
-volatilidad se proyecta el Value at Risk al 99%, 95% y 90% de confianza. Se 
-requieren las librerías time, numpy, pandas, datetime, itertools y arch.
-Se omiten las tildes. Ver README.txt para informacion adicional.
+
+This code makes projections one period forward of the volatility of 
+each series entered through ARCH models. These consider three specifications 
+of the mean (zero, constant and autoregressive), five of the variance (ARCH, 
+GARCH, GJR, APARCH and FIGARCH), and four distributions (normal, t-student, 
+skeewed student-t and GED). Likewise, with the volatility projections the 
+Value at Risk is projected at 99%, 95% confidence. 
+The time, numpy, pandas, datetime, itertools, and arch libraries are required.
+
+See README.txt for additional information.
 '''
 
 
