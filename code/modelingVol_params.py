@@ -195,7 +195,6 @@ dist_ops     = ['normal', 't', 'skewt', 'ged']
 
 
 # Almacenar resultados
-
 modelingVol_params_excel = pd.DataFrame()
 modelingVol_params_latex = pd.DataFrame()
 
