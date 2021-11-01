@@ -1,4 +1,7 @@
 '''
+modelingVol_params.py
+Alejandro Cermeño (09/2021)
+
 This code generates and exports the Table 2: Estimated Parameters for daily Latin
 American Stock and Forex Markets Return (modelingVol_params.xlsx). In addition, 
 the summary of results for each model is saved in modelingVol_summary.txt. 
