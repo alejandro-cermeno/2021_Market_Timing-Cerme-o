@@ -19,8 +19,9 @@ country.
   * data.xlsx: source data used as obtained from Bloomberg.
   * descriptiveStats.py: descriptive statistics for stock and Forex markets returns. Replicates table 1.
   * modelingVol_params.py: procedure to estimated parameters. Replicates table 2.
-  * forecastVolVaR.py: forecast volatility with a rolling window.
-  * backtestVaR.py: procedure to backtest forecast VaR. Replicates table 3.
+  * forecastVolVaR.py: forecast one day ahead VaR at 99%, 95% confidence through a suit of ARCH-type models.
+  * backtestVaR.py: applies a suite of backtest procedures for VaR at 99%, 95% confidence level. The MAE and MSE are also calculated for the volatility forecasts. Replicates table 3.
+  * arch_model_v2.py: an adaptation of the arch_model() function in ARCH package by the Sheppard (2021) to the needs of this research.
 
 * output: full obtained outputs
 * draft.pdf
