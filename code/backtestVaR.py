@@ -1,350 +1,290 @@
 '''
 backtestVaR.py
 Alejandro Cermeño (09/2021)
-El código aplica las pruebas de backtest de Kupiec (1995) y Christoffesen (1998)
-en las proyecciones del VaR al 99%, 95% de confianza realizadas. También se calcula el MAE y MSE 
-para las proyecciones de la volatilidad respecto a la volatilidad realizada (|r|). Se requieren las 
-librerias pandas, datetime e itertools.
-Se omiten las tildes. Ver README.txt para informacion adicional.
-'''
 
-# Librerias 
+The code applies the backtest procedures of Kupiec (1995), Christoffesen (1998)
+and Engle and Manganelli (2004) for VaR at 99%, 95% confidence level. The MAE 
+and MSE are also calculated for the volatility forecasts. time, numpy, pandas, 
+scipy, datetime, itertools and sklearn.metrics are required.
+
+See README.txt for additional information.
+'''
 
 import numpy as np
 import pandas as pd 
-from scipy import stats
+from time import time
 from datetime import timedelta
+from scipy import stats
 from itertools import product 
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-#############
-# Funciones #
-#############
+start_code = time() # start stopwatch  
 
 class varbacktest:
     r"""
-    Implementation of backtest tests.
+    Backtesting procedures for the Value at Risk (VaR)
+
+    The following backtesting procedures can be specified using varbacktest:
+        * Traffic light (TL) test (*FORTCOMING*)
+        * Unconditional coverage (UC) test 
+        * Conditional coverage independence (CCI) test
+        * Conditional Coverage (CC) test
+        * Dynamic Quantile (DQ) test
 
     Parameters
     ----------
-    true : {ndarray, Series, None}
-        The dependent variable
-    pred : {ndarray, Series, None}
-        The dependent variable
-    lags : int, optional
-        Default is 4.
+    returns : {ndarray, Series}
+        Description
+    VaR : {ndarray, Series}
+        Description
+    alpha : float
+        Description
+    hit_lags : int, optional
+        Description
+    forecast_lags : int, optional
+        Description
     """
 
-    def __init__(self, actual, forecast, alpha):
-        self.index = actual.index
-        self.actual = actual.values
-        self.forecast = forecast.values
+    def __init__(
+        self, returns, VaR, alpha = 0.05, hit_lags = 4, forecast_lags = 1):
+      
+        self.index = returns.index
+        self.returns = returns.values
+        self.VaR = VaR.values
         self.alpha = alpha
+        self.hit_lags = hit_lags
+        self.forecast_lags = forecast_lags
 
-    def hit_series(self):
-        return (self.actual < self.forecast) * 1
+        if len(returns) != len(VaR):
+          raise ValueError("Returns and VaR series must have the same lengths")
+        #if not isinstance(hit_lags, int) or hit_lags >= 1:
+        #  raise ValueError("hit_lags must be a positive integer")
+        #if not isinstance(forecast_lags, int) or forecast_lags >= 1:
+        #  raise ValueError("forecast_lags must be a positive integer")
 
-    def number_of_hits(self):
-        return self.hit_series().sum()
+    def serie_hits(self):
+      return (self.returns < self.VaR) * 1
 
-    def hit_rate(self):
-        return self.hit_series().mean()
 
-    def expected_hits(self):
-        return self.actual.size * self.alpha
+    def num_hits(self):
+      return self.serie_hits().sum()
 
-    def duration_series(self):
-        hit_series = self.hit_series()
-        hit_series[0] = 1
-        hit_series[-1] = 1
-        return np.diff(np.where(hit_series == 1))[0]
 
-    def tick_loss(self, return_mean=True):
-        loss = (self.alpha - self.hit_series()) * (self.actual - self.forecast)
-        if return_mean:
-            return loss.mean()
-        else:
-            return loss
+    def pct_hits(self):
+      return self.serie_hits().mean()
+
+
+    def uc(self):
+      """Unconditional coverage test (UC) of Kupiec (1995) also know as 
+      Proportion of failures test (POF)"""
+
+      N = len(self.returns) # Number of observation
+      x = self.num_hits()   # Number of failures
+
+      if x == 0:
+        LRuc = -2 * N * np.log(1 - self.alpha)
+      elif x < N:
+        LRuc = -2 * ((N - x) * np.log(N * (1 - self.alpha) / (N - x)) + x * 
+                     np.log(N * self.alpha / x))
+      elif x == N:
+        LRuc = -2 * N * np.log(self.alpha)
+
+      dof = 1
+      PVuc = (1 - stats.chi2.cdf(LRuc, dof))
+
+      return pd.Series([LRuc, PVuc], index=["LRuc", "PVuc"], name = "UC")
+
+
+    def cci(self):
+      """Conditional coverage independence test (CCI) of Christoffersen (1998)"""
+    
+      hits = self.serie_hits()   # Hit series
+      tr = hits[1:] - hits[:-1]  # Sequence to find transitions
+
+      # Number of periods with no failures followed by a period with failures
+      n01 = (tr == 1).sum()
+      # Number of periods with failures followed by a period with no failures
+      n10 = (tr == -1).sum()
+      # Number of periods with failures followed by a period with failures
+      n11 = (hits[1:][tr == 0] == 1).sum()
+      # Number of periods with no failures followed by a period with no failures
+      n00 = (hits[1:][tr == 0] == 0).sum()
+
+      # Times in the states
+      n0  = n01 + n00 
+      n1 = n10 + n11
+      n = len(self.returns)
+
+      # Probabilities of the transitions from one state to another
+      p01 = n01 / (n00 + n01)
+      p11 = n11 / (n11 + n10)
+      p = n1 / n
+
+      if n1 > 0:
+        cci_h0 = (n00 + n01) * np.log(1 - p) + (n01 + n11) * np.log(p)
+        cci_h1 = n00 * np.log(1 - p01) + n01 * np.log(p01) + n10 * np.log(1 -
+                                                                          p11)
+
+        if p11 > 0:
+          cci_h1 += n11 * np.log(p11)
+        
+        LRcci = -2 * (cci_h0 - cci_h1)
+        PVcci = (1 - stats.chi2.cdf(LRcci, 1))
+      else:
+        PVcci = np.nan
+
+      return pd.Series([LRcci, PVcci], index = ["LRcci", "PVcci"], name = "CCI")
+
 
     def cc(self):
-        """Likelihood ratio framework of Christoffersen (1998)"""
-        hits = self.hit_series()   # Hit series
-        tr = hits[1:] - hits[:-1]  # Sequence to find transitions
+      """Conditional coverage test (CC) of Christoffersen (1998)"""
+    
+      LRuc  = self.uc()["LRuc"]   # Unconditional coverage
+      LRcci = self.cci()["LRcci"] # Independence
+      LRcc = LRuc + LRcci         # Conditional coverage
 
-        # Transitions: nij denotes state i is followed by state j nij times
-        n01, n10 = (tr == 1).sum(), (tr == -1).sum()
-        n11, n00 = (hits[1:][tr == 0] == 1).sum(), (hits[1:][tr == 0] == 0).sum()
+      PVcc = (1 - stats.chi2.cdf(LRcc, 2))
 
-        # Times in the states
-        n0, n1 = n01 + n00, n10 + n11
-        n = n0 + n1
-
-        # Probabilities of the transitions from one state to another
-        p01, p11 = n01 / (n00 + n01), n11 / (n11 + n10)
-        p = n1 / n
-
-        if n1 > 0:
-            # Unconditional Coverage
-            uc_h0 = n0 * np.log(1 - self.alpha) + n1 * np.log(self.alpha)
-            uc_h1 = n0 * np.log(1 - p) + n1 * np.log(p)
-            uc = -2 * (uc_h0 - uc_h1)
-
-            # Independence
-            ind_h0 = (n00 + n01) * np.log(1 - p) + (n01 + n11) * np.log(p)
-            ind_h1 = n00 * np.log(1 - p01) + n01 * np.log(p01) + n10 * np.log(1 - p11)
-            if p11 > 0:
-                ind_h1 += n11 * np.log(p11)
-            ind = -2 * (ind_h0 - ind_h1)
-
-            # Conditional coverage
-            cc = uc + ind
-
-            PVuc = '{:.15f}'.format(1 - stats.chi2.cdf(uc, 1))
-            PVcci = 1 - stats.chi2.cdf(ind, 1)
-            PVcc = '{:.15f}'.format(1 - stats.chi2.cdf(cc, 2))
-        
-        else:
-            PVuc = np.nan
-            PVcc = np.nan
-
-        # Assign names
-        #df.columns = ["Statistic", "p-value"]
-        #df.index = ["Unconditional", "Independence", "Conditional"]
-        return pd.Series([PVuc, PVcc], index=["PVuc", "PVcc"])
-
-    def dq(self, hit_lags=4, forecast_lags=1):
-        """Dynamic Quantile Test (Engle & Manganelli, 2004)"""
-        try:
-            hits = self.hit_series()
-            p, q, n = hit_lags, forecast_lags, hits.size
-            pq = max(p, q - 1)
-            y = hits[pq:] - self.alpha  # Dependent variable
-            x = np.zeros((n - pq, 1 + p + q))
-            x[:, 0] = 1  # Constant
-
-            for i in range(p):  # Lagged hits
-                x[:, 1 + i] = hits[pq-(i+1):-(i+1)]
-
-            for j in range(q):  # Actual + lagged VaR forecast
-                if j > 0:
-                    x[:, 1 + p + j] = self.forecast[pq-j:-j]
-                else:
-                    x[:, 1 + p + j] = self.forecast[pq:]
-
-            beta = np.dot(np.linalg.inv(np.dot(x.T, x)), np.dot(x.T, y))
-            lr_dq = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (self.alpha * (1-self.alpha))
-            PVdq = '{:.15f}'.format(1 - stats.chi2.cdf(lr_dq, 1+p+q))
-
-        except:
-            lr_dq, PVdq = np.nan, np.nan
-
-        return pd.Series(PVdq, index=["PVdq"])
+      return pd.Series([LRcc, PVcc], index=["LRcc", "PVcc"], name = "CC")
 
 
-def pct_fails(returns, VaR):
+    def dq(self):
+      """Dynamic quantile test (DQ) of Engle and Manganelli (2004)"""
 
-    n_fails = ((returns.values < VaR.values) * 1).sum()
+      try:
+        hits = self.serie_hits()
+        p, q, n = self.hit_lags, self.forecast_lags, hits.size
+        pq = max(p, q - 1)
+        y = hits[pq:] - self.alpha  # Dependent variable
+        x = np.zeros((n - pq, 1 + p + q))
+        x[:, 0] = 1  # Constant
 
-    return n_fails / len(VaR)
+        for i in range(p): # Lagged hits 
+          x[:, 1 + i] = hits[pq - (i + 1) : - (i + 1)]
+
+        for j in range(q): # Actual + lagged VaR forecast
+          if j > 0:
+            x[:, 1 + p + j] = self.VaR[pq - j : - j]
+          else:
+            x[:, 1 + p + j] = self.VaR[pq:]
+
+        beta = np.dot(np.linalg.inv(np.dot(x.T, x)), np.dot(x.T, y))
+        LRdq = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (self.alpha * 
+                                                             (1 - self.alpha))
+        PVdq = 1 - stats.chi2.cdf(LRdq, 1 + p + q)
+
+      except:
+        LRdq, PVdq = np.nan, np.nan
+
+      return pd.Series([LRdq, PVdq], index=["LRdq", "PVdq"], name = "DQ")
 
 
-def export(df, file_name, Excel = None, LaTeX = None):
+    def summary(self):
+      """Run all implemented VaR backtests"""
+      df = pd.DataFrame({"Obs":      len(self.returns),
+                         "VaR_lvl":  self.alpha,
+                         "num_hits": self.num_hits(),
+                         "pct_hits": [self.pct_hits()],
+                         "LRuc":     self.uc()["LRuc"],
+                         "PVuc":     self.uc()["PVuc"],
+                         "LRcci":    self.cci()["LRcci"],
+                         "PVcci":    self.cci()["PVcci"],
+                         "LRcc":     self.cc()["LRcc"],
+                         "PVcc":     self.cc()["PVcc"],
+                         "LRdq":     self.dq()["LRdq"],
+                         "PVdq":     self.dq()["PVdq"]
+                         })
+      return df
 
-  # Exportar a Excel
 
-  if Excel == True:
+    # (*FORTCOMING* traffic light test)
+    #def tl(self)      
+      #light = ["green", "yellow", "red"]
+      #hits = self.serie_hits()
+      #N = len(hits)
+      #x = sum(hits)
+      #
+      #Probability = stats.binom.cdf(x, N, pVaR)
 
+
+# Function
+
+def export(df, file_name, excel = None, latex = None):
+
+  # To Excel
+  if excel == True:
     df.to_excel(file_name + '.xlsx')  
-
-  # Exportar a LaTeX
-
-  if LaTeX == True:
+        
+  # To LaTeX
+  if latex == True:
     latex_code = df.to_latex()
-
     with open(file_name + '.tex', 'w') as tex:
       tex.write(latex_code)
 
 
-def name2disp(especificacion):
+######################################
+# Data collection and specifications #
+######################################
 
-  ''' 
-  Para cada especificación de la media, varianza o distribucion, establece
-  el nombre de la especificación a mostrarse.
-  '''
-
-  name2disp_ = ''
-  
-  # Nomnbre especificacion de la media
-  
-  if especificacion == 'Zero':
-    name2disp_ = 'Cero'
-  elif especificacion == 'Constant':
-    name2disp_ = 'Constante'
-  elif especificacion == 'AR':
-    name2disp_ = 'AR'
-
-  # Nombre modelo de la varianza
-
-  elif especificacion == arch_params:
-    name2disp_ = 'ARCH'
-  elif especificacion == garch_params:
-    name2disp_ = 'GARCH'
-  elif especificacion == grj_params:
-    name2disp_ = 'GJR'
-  elif especificacion == egarch_params:
-    name2disp_ = 'EGARCH'
-  elif especificacion == aparch_params:
-    name2disp_ = 'APARCH'
-  elif especificacion == figarch_params:
-    name2disp_ = 'FIGARCH'
-
-  # Nombre de la distribucion
-
-  elif especificacion == 'normal':
-    name2disp_ = 'N'
-  elif especificacion == 't':
-    name2disp_ = 't'
-  elif especificacion == 'skewt':
-    name2disp_ = 'skt'
-  elif especificacion == 'ged':
-    name2disp_ = 'GED'
-
-  else:
-    name2disp_ = 'Especificacion no valida'
-
-  return name2disp_
-
-
-def model_info_fun(ts, mean, variance, dist):
-    
-  # Serie
-  serie_name = pd.Series(ts.name, index = ['serie'])
-
-  # Media
-  media_name = pd.Series(name2disp(mean), index = ['mean'])
-
-  # Varianza
-  varianza_name = pd.Series(name2disp(variance), index=['variance'])
-
-  # Distribucion
-  dist_name = pd.Series(name2disp(dist), index = ['dist'])
-
-  info = pd.concat([serie_name, media_name, varianza_name, dist_name])
-
-  return info
-
-
-# Obtencion de datos 
-# CHECK: IPSA
-df = pd.read_excel('/content/BRL_forecastVolVaR_5553_OOS.xlsx')
+path = "/content/SPBLPGPT_forecastVolVaR_4853_OOS.xlsx"
+df = pd.read_excel(path, index_col = 0)
 
 df['VaR_1'] = df['VaR_1'].apply(lambda x: x*-1)
 df['VaR_5'] = df['VaR_5'].apply(lambda x: x*-1)
 
-####################
-# Especificaciones #
-####################
+# specifications
 
-# Media
-mean_ops       = ['Zero', 'Constant', 'AR']
-#mean_ops = df['mean'].unique()
+mean_ops = df['mean'].unique()
+variance_ops = df['variance'].unique()
+dist_ops = df['dist'].unique()
+VaR_ops = ['VaR_1', 'VaR_5']
+conf_lvl_ops = [0.01, 0.05]
 
-# Varianza
-arch_params    = {'vol': 'ARCH'}
-garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}
-grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}
-egarch_params  = {'p': 1, 'q': 1, 'o': 1, 'vol': 'EGARCH'}
-aparch_params  = {'p':1, 'o':1, 'q':1, 'power': 2.0, 'vol':'GARCH'}
-#figarch_params = {'p':1, 'q':1, 'power': 2.0, 'vol':'FIGARCH'}
-variance_ops   = [arch_params, garch_params, grj_params, egarch_params, 
-                  aparch_params] # figarch_params
-
-# Distribuciones
-dist_ops     = ['normal', 't', 'skewt', 'ged']
-
-
-backtestVaR = pd.DataFrame() # Almacenamiento de resultados
+backtestVaR = pd.DataFrame() 
 
 for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
 
-  # Se filtran los resultados del modelo mean-variance-dist en especifico
+  filtered = df[(df['mean'] == mean) &
+                (df['variance'] == variance) &
+                (df['dist'] == dist)]
 
-  filtered = df[(df['mean'] == name2disp(mean)) &
-                (df['variance'] == name2disp(variance)) &
-                (df['dist'] == name2disp(dist))]
-
-  ###################################
-  # Metricas proyeccion volatilidad #
-  ###################################
+  ##############################
+  # Backtest and other metrics #
+  ##############################
 
   returns = filtered['mean_true']
-  vol_true = filtered['vol_true']
-  vol_pred = filtered['vol_pred']
+  vol_true = filtered['vol_true'].values
+  vol_pred = filtered['vol_pred'].values
 
-  # Tiempo de ejecucion
-  #time_exe = sum(list(map(float, filtered['time'].values)))
+  mse = mean_squared_error(vol_true, vol_pred)  # MSE 
+  mae = mean_absolute_error(vol_true, vol_pred) # MAE
 
-  # MSE (vol_true vs vol_pred)
-  mse = mean_squared_error(vol_true.values, vol_pred.values)
-
-  # MAE (vol_true vs vol_pred)
-  mae = mean_absolute_error(vol_true.values, vol_pred.values)
-
-
-  ######################################
-  # Metricas proyeccion VaR (backtest) #
-  ######################################
-
-  VaR_ops     = ['VaR_1', 'VaR_5']
-  conf_lvl_ops = [0.01, 0.05]
-
-  # Para cada nivel de confianza 
-
+  # For each confidence level 
   for i in range(len(VaR_ops)):
 
-    VaR = filtered[VaR_ops[i]]
-    conf_lvl = conf_lvl_ops[i]
+    bt = varbacktest(returns,
+                     VaR = filtered[VaR_ops[i]], # Select column 'VaR_1' or 'VaR_5' 
+                     alpha = conf_lvl_ops[i]
+                     )
 
-    # Porcentaje de fallas VaR
-    pct_fails_ = pct_fails(returns, VaR)
+    # Results table
+    add = pd.concat([pd.DataFrame({"serie": filtered['serie'].unique(),
+                                      "mean": mean,
+                                      "variance": variance,
+                                      "dist": dist,
+                                      "mae": mae,
+                                      "mse": mse}),
+                     bt.summary()],
+                     axis = 1)      
+        
+    backtestVaR = backtestVaR.append(add)
 
-    # Pruebas de backtest
+# The results are exported
+export(backtestVaR, 'backtestVaR_' + df['serie'].unique()[0], excel = True)
 
-    bt = varbacktest(actual=returns, forecast=VaR, alpha=conf_lvl)
-    uc = bt.cc()['PVuc'] # Kupiec (1995)
-    cc = bt.cc()['PVcc'] # Christoffersen (1998)
-    dq = bt.dq()['PVdq'] # Engle and Manganelli (2004)
+end_code = time() # end stopwatch 
+time_code = str(timedelta(seconds = round(end_code - 
+                                          start_code))) # Execution time
 
-    #######################
-    # Tabla de resultados #
-    #######################
-
-
-    serie = pd.Series(df['serie'], name = df['serie'].iloc[1])
-    model_info2t = model_info_fun(serie, mean, variance, dist)
-
-    mae2t = pd.Series(mae, index = ['MAE'])
-    mse2t = pd.Series(mse, index = ['MSE'])
-    VaR_lvl2t = pd.Series(conf_lvl, index = ['VaR_lvl'])
-    pct_fails_2t = pd.Series(pct_fails_, index = ['pct_fails'])
-    uc2t = pd.Series(uc, index = ['uc'])
-    cc2t = pd.Series(cc, index = ['cc'])
-    dq2t = pd.Series(dq, index = ['dq'])
-
-    #time_exe2t = pd.Series(time_exe, index = ['time_exe'])
-
-    to_backtestVaR = pd.concat([model_info2t, mae2t, mse2t, VaR_lvl2t, 
-                                pct_fails_2t, uc2t, cc2t, dq2t])
-    to_backtestVaR = pd.DataFrame(to_backtestVaR).T
-
-    backtestVaR = backtestVaR.append(to_backtestVaR)
-
-# Se exportan los resultados
-export(backtestVaR, 'backtestVaR_' + df['serie'][1], Excel = True)
-
-print('Archivo backtestVaR_' + df['serie'][1] + '.xlsx guardado con éxito')
-
-# Se finaliza el código
-print('Ejecución finalizada')
-
-backtestVaR
+print('backtestVaR_' + df['serie'].unique()[0] + '.xlsx successfully saved')
+print('Execution completed')
