@@ -182,7 +182,7 @@ class varbacktest:
     def summary(self):
       """Run all implemented VaR backtests"""
       df = pd.DataFrame({"VaR_lvl":  self.alpha,
-                         "Obs":      len(self.returns),                    
+                         "obs":      len(self.returns),                    
                          "num_hits": self.num_hits(),
                          "pct_hits": [self.pct_hits()],
                          "LRuc":     self.uc()["LRuc"],
