@@ -3,8 +3,7 @@ forecastVolVaR_v6.py
 Alejandro Cermeño 
 
 This code forecast one day ahead VaR at 99%, 95% confidence through a suit of 
-ARCH-type models. Additionally, three backtest tests are applied. time, numpy,
-pandas, datetime, itertools, and arch are required.
+ARCH-type models. time, numpy, pandas, datetime, itertools, and arch are required.
 
 See README.txt for additional information.
 
