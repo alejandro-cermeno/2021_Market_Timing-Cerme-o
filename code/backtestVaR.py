@@ -37,7 +37,7 @@ class varbacktest:
         Description
     VaR : {ndarray, Series}
         Description
-    alpha : float
+    alpha : float, optional
         Description
     hit_lags : int, optional
         Description
@@ -181,8 +181,8 @@ class varbacktest:
 
     def summary(self):
       """Run all implemented VaR backtests"""
-      df = pd.DataFrame({"Obs":      len(self.returns),
-                         "VaR_lvl":  self.alpha,
+      df = pd.DataFrame({"VaR_lvl":  self.alpha,
+                         "Obs":      len(self.returns),                    
                          "num_hits": self.num_hits(),
                          "pct_hits": [self.pct_hits()],
                          "LRuc":     self.uc()["LRuc"],
