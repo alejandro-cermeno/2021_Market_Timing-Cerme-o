@@ -13,22 +13,19 @@ See README.txt for additional information.
 import time
 import numpy  as np
 import pandas as pd
-
 from datetime  import timedelta
 from itertools import product 
 from arch      import arch_model
 from arch.__future__ import reindexing
 
-start = time.time()  # stopwatch start 
-
+start = time.time()  # start stopwatch  
 
 #############
 # Functions #
 #############
 
 def price2ret(price):
-  ret = (100 * ( np.log(price) - np.log(price.shift(1))))
-  return ret
+  return (100 * ( np.log(price) - np.log(price.shift(1))))
 
 def export(df, file_name, excel = None, latex = None):
 
@@ -43,7 +40,6 @@ def export(df, file_name, excel = None, latex = None):
       tex.write(latex_code)
 
 def name2disp(especificacion):
-
     """For each specification of the mean, variance, or distribution, set 
     the name of the specification to be displayed."""
 
@@ -273,67 +269,47 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         to_excel = pd.concat([model_info, singular_matrix])
         
         
-    # The row is appended to the results tables (append)
-      
+    # The row is appended to the results tables (append)      
     to_excel = pd.DataFrame(to_excel).T
-    #to_latex = pd.DataFrame(to_latex).T
         
     modelingVol_params_excel = modelingVol_params_excel.append(to_excel, 
                                                                 sort = False, 
                                                                 ignore_index = True)
-        
-    #modelingVol_params_latex = modelingVol_params_latex.append(to_latex, 
-    #                                                           sort = False,
-    #                                                           ignore_index = True)
-
 
 ####################################
 #Organization of the results table #
 ####################################
 
 # Replace NaN with blanks
-
 modelingVol_params_excel = modelingVol_params_excel.fillna('')
-#modelingVol_params_latex = modelingVol_params_latex.fillna('')
 
 # Join columns: d with delta, nu with eta, Const with mu, beta[1] with beta
-
 modelingVol_params_excel['delta'] = modelingVol_params_excel['delta'] +\
 modelingVol_params_excel['d']
 modelingVol_params_excel['mu'] = modelingVol_params_excel['mu'] +\
 modelingVol_params_excel['Const']
 modelingVol_params_excel['nu'] = modelingVol_params_excel['nu'] +\
 modelingVol_params_excel['eta']
-
 modelingVol_params_excel.drop(['Const', 'eta', 'd'], axis=1)
 
 # Rename columns
-
 modelingVol_params_excel.rename(columns = {'alpha[1]':'alpha',
                                            'beta[1]':'beta',
                                            'gamma[1]':'gamma'},
                                 inplace = True)
 # Columns order
-
 col_order = ['serie', 'mean', 'variance', 'dist', 'mu', 'omega', 'alpha',
              'beta', 'gamma', 'delta', 'phi', 'nu', 'lambda', 'BIC', 'log-lik', 
              'Singular Matrix']     
 modelingVol_params_excel = modelingVol_params_excel[col_order]
 
 
-#####################
-# Export of results #
-#####################
 
-  # A Excel
+# Export of results 
 export(modelingVol_params_excel, 'modelingVol_params', Excel = True)
-
-  # A LaTeX
-#export(modelingVol_params_latex, 'modelingVol_params', LaTeX = True)
 
 
 # The code is finalized
-
 end = time.time()                                       # End of timer
 time_exe = str(timedelta(seconds = round(end - start))) # Execution time
 
