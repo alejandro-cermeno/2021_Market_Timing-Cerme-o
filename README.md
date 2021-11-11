@@ -24,5 +24,9 @@ country.
   * arch_model_v2.py: an adaptation of the arch_model() function in ARCH package by the Sheppard (2021) to the needs of this research.
 
 * output: full obtained outputs
+  * descriptiveStats.lyx: Table 1 Descriptive Statistics for Stock and Forex Markets Returns
+  * modelingVol_params.xlsx: full Table 2 Estimated Parameters for daily Latin American Stock and Forex Markets Return
+  * backtestVaR.xlsx: full Table 3 Accuracy of VaR predictions for Stock and Forex Markets Returns
+  * forecastVolVaR.rar: full volatility and VaR forecasts for each series. Not included because it is very heavy. Available in https://drive.google.com/file/d/1_ExWrolC-KZ8x5QnKZXrcNGr-uKWj1uK/view?usp=sharing.
 * draft.pdf
 * slides.pdf
