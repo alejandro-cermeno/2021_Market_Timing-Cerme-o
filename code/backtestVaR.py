@@ -34,11 +34,11 @@ class varbacktest:
     Parameters
     ----------
     returns : {ndarray, Series}
-        Description
+        Contains the returns values.
     VaR : {ndarray, Series}
-        Description
+        Contains Value-at-Risk (VaR) values. Should be in the same units as the returns data. 
     alpha : float, optional
-        Description
+        Contains the desired VaR confidence level. Default value is 0.05.
     hit_lags : int, optional
         Description
     forecast_lags : int, optional
