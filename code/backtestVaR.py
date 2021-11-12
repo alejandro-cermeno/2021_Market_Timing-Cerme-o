@@ -115,9 +115,11 @@ class varbacktest:
       n1 = n10 + n11
       n = len(self.returns)
 
-      # Probabilities of the transitions from one state to another
+      # Probability of having a failure on period t, given that  there was no failure on period t-1
       p01 = n01 / (n00 + n01)
+      # Probability of having a failure on period t, given that there was a failure on period t-1
       p11 = n11 / (n11 + n10)
+      # Probability of having a failure on period t
       p = n1 / n
 
       if n1 > 0:
@@ -143,7 +145,8 @@ class varbacktest:
       LRcci = self.cci()["LRcci"] # Independence
       LRcc = LRuc + LRcci         # Conditional coverage
 
-      PVcc = (1 - stats.chi2.cdf(LRcc, 2))
+      dof = 2
+      PVcc = 1 - stats.chi2.cdf(LRcc, dof)
 
       return pd.Series([LRcc, PVcc], index=["LRcc", "PVcc"], name = "CC")
 
@@ -169,14 +172,14 @@ class varbacktest:
             x[:, 1 + p + j] = self.VaR[pq:]
 
         beta = np.dot(np.linalg.inv(np.dot(x.T, x)), np.dot(x.T, y))
-        LRdq = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (self.alpha * 
+        DQ = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (self.alpha * 
                                                              (1 - self.alpha))
-        PVdq = 1 - stats.chi2.cdf(LRdq, 1 + p + q)
+        PVdq = 1 - stats.chi2.cdf(DQ, 1 + p + q)
 
       except:
-        LRdq, PVdq = np.nan, np.nan
+        DQ, PVdq = np.nan, np.nan
 
-      return pd.Series([LRdq, PVdq], index=["LRdq", "PVdq"], name = "DQ")
+      return pd.Series([DQ, PVdq], index=["DQ", "PVdq"], name = "DQ")
 
 
     def summary(self):
@@ -191,7 +194,7 @@ class varbacktest:
                          "PVcci":    self.cci()["PVcci"],
                          "LRcc":     self.cc()["LRcc"],
                          "PVcc":     self.cc()["PVcc"],
-                         "LRdq":     self.dq()["LRdq"],
+                         "DQ":     self.dq()["DQ"],
                          "PVdq":     self.dq()["PVdq"]
                          })
       return df
