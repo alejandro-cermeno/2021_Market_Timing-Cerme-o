@@ -1,5 +1,7 @@
 % MathWorks, (2012). Risk Management Toolbox: User's Guide (R2021b).
 
+format long 
+
 % Data collection
 URL = ["https://git.io/J1clf"];
 filename = "toyserie.xlsx";
@@ -33,13 +35,13 @@ for i = 1 : length(VaR_ops)
     disp(results)
 end
 
-%  VaR_lvl    obs     num_hits    pct_fails      TL      LRuc     PVuc    LRcci        PVcci       LRcc     PVcc
-%    _______    ____    ________    _________    ___    ______    ____    ______    ___________    _____    ____
+%     VaR_lvl    obs     num_hits        pct_fails        TL           LRuc          PVuc         LRcci                  PVcci                  LRcc          PVcc
+%    _______    ____    ________    _________________    ___    ________________    ____    ________________    _____________________    ________________    ____
 %
-%     0.99      1703      1278       0.75044     red    9865.7     0      890.48    1.1527e-195    10756     0  
+%     0.99      1703      1278      0.750440399295361    red    9865.69395900987     0      890.478433173468    1.15267565481073e-195    10756.1723921833     0  
 %
 %
-%    VaR_lvl    obs     num_hits    pct_fails    TL      LRuc     PVuc    LRcci        PVcci        LRcc     PVcc
-%    _______    ____    ________    _________    ___    ______    ____    ______    ___________    ______    ____
+%    VaR_lvl    obs     num_hits        pct_fails        TL           LRuc          PVuc         LRcci                  PVcci                  LRcc          PVcc
+%    _______    ____    ________    _________________    ___    ________________    ____    ________________    _____________________    ________________    ____
 %
-%     0.95      1703      999        0.58661     red    3748.2     0      862.08    1.7198e-189    4610.3     0  
+%     0.95      1703      999       0.586611861421022    red    3748.19441993176     0      862.079510341855    1.71979596437219e-189    4610.27393027362     0  
