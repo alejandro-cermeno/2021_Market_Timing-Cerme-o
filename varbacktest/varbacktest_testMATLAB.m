@@ -1,8 +1,8 @@
 % Data collection
 URL = ["https://git.io/J1clf"];
 filename = "toyserie.xlsx";
-%urlwrite(URL,filename);
-%df = readtimetable("toyserie.xlsx");
+urlwrite(URL,filename);
+df = readtimetable("toyserie.xlsx");
 
 % specifications
 VaR_ops = ["VaR_1", "VaR_5"];
