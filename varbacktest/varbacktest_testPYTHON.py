@@ -43,11 +43,9 @@ class varbacktest:
         #  raise ValueError("forecast_lags must be a positive integer")
 
     def serie_hits(self):
-      return (self.returns < self.VaR) * 1   # <- Ardia et al. (2019) use
-      #return (-self.returns > self.VaR) * 1 # <- MATLAB's Risk Management 
-                                             #    Toolbox  use
+      return (self.returns < self.VaR) * 1
       
-
+    
     def num_hits(self):
       return self.serie_hits().sum()
 
