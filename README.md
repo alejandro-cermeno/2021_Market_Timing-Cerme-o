@@ -28,5 +28,10 @@ country.
   * modelingVol_params.xlsx: full Table 2 Estimated Parameters for daily Latin American Stock and Forex Markets Return
   * backtestVaR.xlsx: full Table 3 Accuracy of VaR predictions for Stock and Forex Markets Returns
   * forecastVolVaR.rar: full volatility and VaR forecasts for each series. Not included because it is very heavy. Available in https://drive.google.com/file/d/1_ExWrolC-KZ8x5QnKZXrcNGr-uKWj1uK/view?usp=sharing.
+* varbacktest_test: Verify that the `varbacktest()` class is well implemented by comparing results with those of MATLAB and R.
+  * toyserie.xlsx
+  * varbacktest_testMATLAB.m
+  * varbacktest_testPYTHON.py
+  * varbacktest_testR.R
 * draft.pdf
 * slides.pdf
