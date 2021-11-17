@@ -1,4 +1,6 @@
-###########
+"""
+Ardia D, Boudt K, Catania L (2019). “Generalized Autoregressive Score Models in R: The GAS Package.” Journal of Statistical Software, 88(6), 1–28.
+"""
 # Funcion #
 ###########
 
