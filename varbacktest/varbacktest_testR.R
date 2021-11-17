@@ -1,18 +1,15 @@
 """
-Ardia D, Boudt K, Catania L (2019). “Generalized Autoregressive Score Models in R: The GAS Package.” Journal of Statistical Software, 88(6), 1–28.
+Ardia D, Boudt K, Catania L (2019). “Generalized Autoregressive Score Models
+in R: The GAS Package.” Journal of Statistical Software, 88(6), 1–28.
 """
-# Funcion #
+
+#install.packages('openxlsx')
+library('openxlsx')
+
+###########
+# Function #
 ###########
 
-vY = returns
-vVaR = VaR
-dTau = 0.05
-
-vY = as.numeric(vY)
-vVaR = as.numeric(vVaR)
-
-Hit = HitSequence(vY, vVaR)
-UC = Kupiec(Hit, dTau)
 BacktestVaR <- function(data, VaR, alpha, cLags = 4L) {
   
   vY = data
@@ -154,7 +151,7 @@ QLoss <- function(vY, vVaR, dTau) {
 
 # data collection
 path = "https://git.io/J1clf"
-#df <- read.xlsx(path, skipEmptyRows = FALSE)
+df <- read.xlsx(path, skipEmptyRows = FALSE)
 
 # specifications
 VaR_ops = c("VaR_1", "VaR_5")
