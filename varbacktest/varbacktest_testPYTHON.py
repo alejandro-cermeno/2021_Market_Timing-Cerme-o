@@ -186,8 +186,8 @@ for i in range(len(VaR_ops)):
   bt = varbacktest(returns, VaR, alpha = conf_lvl_ops[i])
   display(bt.summary())
 
-#	VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
-#	0.01	1703	166	0.097475	471.5963091966	0.0000000000	294.4738969755	0.0000000000	766.0702061721	0.0000000000	7517.9217346653	0.0000000000
+#	VaR_lvl	obs	  num_hits	pct_hits  LRuc	          PVuc	        LRcci	        PVcci	      LRcc	          PVcc	        DQ	            PVdq
+#	0.01	1703  166	    0.097475  471.5963091966  0.0000000000	294.4738969755	0.0000000000  766.0702061721  0.0000000000	7517.9217346653	0.0000000000
 #
-#   VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
-#	0.05	1703	284	0.166765	311.9984615692	0.0000000000	197.9521720653	0.0000000000	509.9506336345	0.0000000000	1659.2051507018	0.0000000000
+#   VaR_lvl	obs	  num_hits	pct_hits  LRuc	          PVuc	        LRcci	        PVcci	       LRcc	            PVcc	        DQ	            PVdq
+#	0.05	1703  284	    0.166765  311.9984615692  0.0000000000	197.9521720653	0.0000000000   509.9506336345	0.0000000000	1659.2051507018	0.0000000000
