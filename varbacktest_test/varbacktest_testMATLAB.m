@@ -3,7 +3,7 @@
 format long 
 
 % Data collection
-URL = ["https://git.io/J1clf"];
+URL = ["https://git.io/J1Eqb"];
 filename = "toyserie.xlsx";
 urlwrite(URL, filename);
 df = readtimetable(filename);
