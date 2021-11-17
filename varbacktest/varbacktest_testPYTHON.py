@@ -72,7 +72,7 @@ class varbacktest:
         LRuc = -2 * N * np.log(self.alpha)
 
       dof = 1
-      PVuc = (1 - stats.chi2.cdf(LRuc, dof))
+      PVuc = "{:.10f}".format(1 - stats.chi2.cdf(LRuc, dof))
 
       return pd.Series([LRuc, PVuc], index=["LRuc", "PVuc"], name = "UC")
 
@@ -113,7 +113,7 @@ class varbacktest:
           cci_h1 += n11 * np.log(p11)
         
         LRcci = -2 * (cci_h0 - cci_h1)
-        PVcci = (1 - stats.chi2.cdf(LRcci, 1))
+        PVcci = "{:.10f}".format(1 - stats.chi2.cdf(LRcci, 1))
       else:
         PVcci = np.nan
 
@@ -128,7 +128,7 @@ class varbacktest:
       LRcc = LRuc + LRcci         # Conditional coverage
 
       dof = 2
-      PVcc = 1 - stats.chi2.cdf(LRcc, dof)
+      PVcc = "{:.10f}".format(1 - stats.chi2.cdf(LRcc, dof))
 
       return pd.Series([LRcc, PVcc], index=["LRcc", "PVcc"], name = "CC")
 
@@ -156,7 +156,7 @@ class varbacktest:
         beta = np.dot(np.linalg.inv(np.dot(x.T, x)), np.dot(x.T, y))
         DQ = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (self.alpha * 
                                                              (1 - self.alpha))
-        PVdq = 1 - stats.chi2.cdf(DQ, 1 + p + q)
+        PVdq = "{:.10f}".format(1 - stats.chi2.cdf(DQ, 1 + p + q))
 
       except:
         DQ, PVdq = np.nan, np.nan
@@ -196,8 +196,9 @@ for i in range(len(VaR_ops)):
   bt = varbacktest(returns, VaR, alpha = conf_lvl_ops[i])
   display(bt.summary())
 
-#   VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
-#   0.01	  1703	1278	0.75044	9865.693959	0.0	887.702514	0.0	10753.396473	0.0	115575.815291	0.0
+
+#	VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
+#	0.01	1703	166	0.097475	471.596309	0.0000000000	294.685777	0.0000000000	766.282086	0.0000000000	7517.921735	0.0000000000
 #
-#   VaR_lvl	obs	 num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
-#   0.05	  1703 999	0.586612	3748.19442	0.0	862.080344	0.0	4610.274764	0.0	15359.667815	0.0
+#VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
+#	0.05	1703	284	0.166765	311.998462	0.0000000000	198.321401	0.0000000000	510.319863	0.0000000000	1659.205151	0.0000000000
