@@ -1,3 +1,5 @@
+% MathWorks, (2012). Risk Management Toolbox: User's Guide (R2021b).
+
 % Data collection
 URL = ["https://git.io/J1clf"];
 filename = "toyserie.xlsx";
