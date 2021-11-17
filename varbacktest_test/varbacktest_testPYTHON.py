@@ -172,7 +172,7 @@ class varbacktest:
       return df
 
 # Data collection
-path = "https://git.io/J1clf"
+path = "https://git.io/J1Eqb"
 df = pd.read_excel(path, index_col = 0)
 
 # specifications
