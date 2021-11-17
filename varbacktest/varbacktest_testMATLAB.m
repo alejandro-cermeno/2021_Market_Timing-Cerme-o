@@ -3,7 +3,7 @@
 % Data collection
 URL = ["https://git.io/J1clf"];
 filename = "toyserie.xlsx";
-urlwrite(URL,filename);
+urlwrite(URL, filename);
 df = readtimetable("toyserie.xlsx");
 
 % specifications
@@ -11,9 +11,8 @@ VaR_ops = ["VaR_1", "VaR_5"];
 conf_lvl_ops = [0.99, 0.95];
 returns = df.mean_true;
 
-
 for i = 1 : length(VaR_ops)
-    VaR = df.(i);
+    VaR = df.(i + 1);
     vbt = varbacktest(returns, VaR, 'VaRLevel', conf_lvl_ops(i));
     UC = pof(vbt);
     obs = UC.Observations;
@@ -34,13 +33,13 @@ for i = 1 : length(VaR_ops)
     disp(results)
 end
 
-
-%    VaR_lvl    obs     num_hits    pct_fails    TL      LRuc     PVuc    LRcci       PVcci        LRcc     PVcc
-%    _______    ____    ________    _________    ___    ______    ____    ______    __________    ______    ____
+%  VaR_lvl    obs     num_hits    pct_fails      TL      LRuc     PVuc    LRcci        PVcci       LRcc     PVcc
+%    _______    ____    ________    _________    ___    ______    ____    ______    ___________    _____    ____
 %
-%     0.99      1703      458        0.26894     red    2260.4     0      115.26    6.8859e-27    2375.7     0  
+%     0.99      1703      1278       0.75044     red    9865.7     0      890.48    1.1527e-195    10756     0  
 %
-%    VaR_lvl    obs     num_hits    pct_fails    TL     LRuc    PVuc    LRcci        PVcci        LRcc     PVcc
-%    _______    ____    ________    _________    ___    ____    ____    ______    ___________    ______    ____
 %
-%     0.95      1703      1278       0.75044     red    5787     0      890.48    1.1527e-195    6677.5     0  
+%    VaR_lvl    obs     num_hits    pct_fails    TL      LRuc     PVuc    LRcci        PVcci        LRcc     PVcc
+%    _______    ____    ________    _________    ___    ______    ____    ______    ___________    ______    ____
+%
+%     0.95      1703      999        0.58661     red    3748.2     0      862.08    1.7198e-189    4610.3     0  
