@@ -44,7 +44,8 @@ class varbacktest:
 
     def serie_hits(self):
       return (self.returns < self.VaR) * 1
-
+      # MATLAB use "return (-self.returns > self.VaR) * 1"
+      
 
     def num_hits(self):
       return self.serie_hits().sum()
@@ -194,8 +195,8 @@ for i in range(len(VaR_ops)):
   bt = varbacktest(returns, VaR, alpha = conf_lvl_ops[i])
   display(bt.summary())
 
-#   VaR_lvl  obs	num_hits  pct_hits	LRuc	    PVuc  LRcci	      PVcci  LRcc        PVcc  DQ	        PVdq
-#   0.01	 1703	166	      0.097475	471.596309	0.0	  294.685777  0.0	 766.282086	 0.0   7517.921735	0.0
+#   VaR_lvl	obs	num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
+#   0.01	  1703	1278	0.75044	9865.693959	0.0	887.702514	0.0	10753.396473	0.0	115575.815291	0.0
 #
-#   VaR_lvl	obs	  num_hits	pct_hits	LRuc	      PVuc	LRcci	    PVcci  LRcc	       PVcc  DQ	          PVdq
-#   0.05	1703  284	    0.166765	311.998462    0.0	198.32140   0.0	   510.319863  0.0	 1659.205151  0.0
+#   VaR_lvl	obs	 num_hits	pct_hits	LRuc	PVuc	LRcci	PVcci	LRcc	PVcc	DQ	PVdq
+#   0.05	  1703 999	0.586612	3748.19442	0.0	862.080344	0.0	4610.274764	0.0	15359.667815	0.0
