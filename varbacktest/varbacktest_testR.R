@@ -166,8 +166,8 @@ for(i in 1 : length(VaR_ops)) {
   print(BacktestVaR(returns, VaR, conf_lvl_ops[i]))
 }
 
-#VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
-#0.99     1703 166      0.09748  Inf  0    294.5 0     NA    NA  7609 0
-
-#VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
-#0.95     1703 284      0.1668   312  0    Inf   0     NA   NA   1676 0
+#   VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
+#   0.99     1703 166      0.09748  Inf  0    294.5 0     NA    NA  7609 0
+#
+#   VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
+#   0.95     1703 284      0.1668   312  0    Inf   0     NA   NA   1676 0
