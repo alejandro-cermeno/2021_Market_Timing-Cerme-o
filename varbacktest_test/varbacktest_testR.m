@@ -150,7 +150,7 @@ QLoss <- function(vY, vVaR, dTau) {
 ########
 
 # data collection
-path = "https://git.io/J1clf"
+path = "https://git.io/J1Eqb"
 df <- read.xlsx(path, skipEmptyRows = FALSE)
 
 # specifications
