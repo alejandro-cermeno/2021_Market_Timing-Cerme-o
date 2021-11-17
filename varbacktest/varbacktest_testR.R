@@ -29,7 +29,8 @@ BacktestVaR <- function(data, VaR, alpha, cLags = 4L) {
   
   lOut = data.frame("VaR_lvl" = (1-dTau),  "obs" = UC["obs"], 
                     "num_hits" = UC["num_hits"], "pct_hits" = UC["pct_hits"],
-                    "LRuc" = UC["LRuc"], "PVuc" = UC["PVuc"], 
+                    "LRuc" = formatC(UC["LRuc"], format = "f", digits = 6), 
+                    "PVuc" = formatC(UC["PVuc"], format = "f", digits = 6), 
                     "LRcci" = CC["LRcci"],"PVcci" = CC["PVcci"], 
                     "LRcc" = CC["PVcc"], "PVcc" = CC["PVcc"], "DQ" = DQ["DQ"], 
                     "PVdq" = DQ["PVdq"])
@@ -62,7 +63,7 @@ DQOOStest <- function(y, VaR, tau, cLags) {
   
   dDQpvalueOut = 1 - pchisq(dDQstatOut, ncol(mX))
   
-  DQ = c(dDQstatOut, dDQpvalueOut)
+  DQ = formatC(c(dDQstatOut, dDQpvalueOut), format = "f", digits = 6)
   names(DQ) = c("DQ", "PVdq")
   return(DQ)
 }
@@ -83,7 +84,6 @@ Kupiec <- function(Hit, tau) {
     test = -2 * ((N - x) * log(1 - tau) + x * log(tau) - (N - x) * log(1 - rate) - x * log(rate))
   # threshold = qchisq(alphaTest, df = 1)
   pvalue = 1 - pchisq(test, df = 1)
-  
   LRpof = c(N, x, rate, test, pvalue)
   names(LRpof) = c("obs", "num_hits", "pct_hits", "LRuc", "PVuc")
   return(LRpof)
@@ -114,7 +114,7 @@ Christoffersen <- function(Hit, tau) {
   LRcc = LRpof + LRind
   PVcci = 1 - pchisq(LRind, df = 1)
   PVcc = 1 - pchisq(LRcc, df = 2L)
-  LRcc = c(LRind, PVcci, LRcc, PVcc)
+  LRcc = formatC(c(LRind, PVcci, LRcc, PVcc), format = "f", digits = 6)
   names(LRcc) = c("LRcci", "PVcci", "LRcc", "PVcc")
   return(LRcc)
 }
@@ -165,8 +165,9 @@ for(i in 1 : length(VaR_ops)) {
   print(BacktestVaR(returns, VaR, conf_lvl_ops[i]))
 }
 
-#   VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
-#   0.99     1703 166      0.09748  Inf  0    294.5 0     NA    NA  7609 0
+
+#   VaR_lvl  obs  num_hits     pct_hits LRuc     PVuc      LRcci      PVcci     LRcc  PVcc  DQ          PVdq
+#   0.99     1703 166          0.097475 Inf      0.000000  294.473897 0.000000  NA    NA    7608.723302 0.000000
 #
-#   VaR_lvl  obs  num_hits pct_hits LRuc PVuc LRcci PVcci LRcc PVcc DQ   PVdq
-#   0.95     1703 284      0.1668   312  0    Inf   0     NA   NA   1676 0
+#   VaR_lvl  obs   num_hits pct_hits  LRuc       PVuc      LRcci  PVcci     LRcc  PVcc  DQ           PVdq
+#   0.95     1703  284      0.16676   311.998462 0.000000  Inf    0.000000  NA    NA    1676.338970  0.000000
