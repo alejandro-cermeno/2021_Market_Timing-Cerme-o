@@ -6,9 +6,9 @@ in R: The GAS Package.” Journal of Statistical Software, 88(6), 1–28.
 #install.packages('openxlsx')
 library('openxlsx')
 
-###########
+############
 # Function #
-###########
+############
 
 BacktestVaR <- function(data, VaR, alpha, cLags = 4L) {
   
