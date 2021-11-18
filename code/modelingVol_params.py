@@ -285,7 +285,7 @@ modelingVol_params_excel = modelingVol_params_excel[col_order]
 
 
 # Export of results 
-export(modelingVol_params_excel, 'modelingVol_params', Excel = True)
+export(modelingVol_params_excel, 'modelingVol_params', excel = True)
 
 
 # The code is finalized
