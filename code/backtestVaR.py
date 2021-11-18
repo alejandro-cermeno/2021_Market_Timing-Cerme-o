@@ -30,6 +30,9 @@ class varbacktest:
         * Conditional coverage independence (CCI) test
         * Conditional Coverage (CC) test
         * Dynamic Quantile (DQ) test
+     Additionally 
+        * Actual over Expected Ratio (AE) (*FORTCOMING*)
+        *¿Absolute Deviation (AD)?
 
     Parameters
     ----------
