@@ -25,14 +25,16 @@ class varbacktest:
     Backtesting procedures for the Value at Risk (VaR)
 
     The following backtesting procedures can be specified using varbacktest:
-        * Traffic light (TL) test (*FORTCOMING*)
         * Unconditional coverage (UC) test 
         * Conditional coverage independence (CCI) test
         * Conditional Coverage (CC) test
         * Dynamic Quantile (DQ) test
-     Additionally 
+        
+     Additionally, work in progress includes:
+        * Traffic light (TL) test (*FORTCOMING*)
         * Actual over Expected Ratio (AE) (*FORTCOMING*)
-        *¿Absolute Deviation (AD)?
+        * Firm loss of Sarma et al. (2003) (*FORTCOMING*)
+        * Quadratic Loss of Lopez (1999) and Martens et al. (2009) (*FORTCOMING*)
 
     Parameters
     ----------
