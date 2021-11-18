@@ -7,7 +7,7 @@ ARCH-type models. time, numpy, pandas, datetime, itertools, and arch are require
 
 See README.txt for additional information.
 
-WARNING: It took about 30 hours per time series to run on an 8 GB 
+WARNING: It took about 20 hours per time series to run on an 8 GB 
          Memory / 4 Intel vCPUs / 160 GB Disk.
 '''
 
