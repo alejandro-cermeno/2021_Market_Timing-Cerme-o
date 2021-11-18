@@ -8,6 +8,7 @@ the summary of results for each model is saved in modelingVol_summary.txt.
 Requires time, numpy, pandas, datetime, itertools and arch.
 
 See README.txt for additional information.
+
 '''
 
 import time
@@ -39,9 +40,58 @@ def export(df, file_name, excel = None, latex = None):
     with open(file_name + '.tex', 'w') as tex:
       tex.write(latex_code)
 
+
+def signif_ast(coef, pvalues):
+    """Sets the confidence level in asterisks."""
+    
+    signif_ast = list()
+
+    for p in range(len(pvalues)):
+      if pvalues[p] <= 0.01:
+        asterisks = '***' # significant at 1%             
+      elif pvalues[p] <= 0.05:                
+        asterisks = '**'  # significant at 5%                   
+      elif pvalues[p] <= 0.1:
+        asterisks = '*'   # significant at 10%                    
+      else:
+        asterisks = ''    # not significant     
+
+      value = str(coef[p]) + asterisks # joins the coefficient and the asterisks
+
+      signif_ast.append(value)
+
+    signif_ast = pd.DataFrame(signif_ast, index = coef.index)
+  
+    return signif_ast  
+
+
+def signif_letter(coef, pvalues):
+    """Sets the confidence level in asterisks."""
+
+    signif_letter = list()
+
+    for p in range(len(pvalues)):
+      if pvalues[p] <= 0.01:
+        asterisks = '$^{a}$' # significant at 1%                
+      elif pvalues[p] <= 0.05:                
+        asterisks = '$^{b}$'  # significant at 5%                   
+      elif pvalues[p] <= 0.1:
+        asterisks = '$^{c}$'   # significant at 10%                
+      else:
+        asterisks = ''    # not significant       
+
+      value = str(coef[p]) + asterisks # joins the coefficient and the asterisks
+
+      signif_letter.append(value)
+    
+    signif_letter = pd.DataFrame(signif_letter, index = coef.index)
+
+    return signif_letter
+
+
 def name2disp(especificacion):
-    """For each specification of the mean, variance, or distribution, set 
-    the name of the specification to be displayed."""
+  """For each specification of the mean, variance, or distribution, set 
+  the name of the specification to be displayed."""
 
   # Mean specification
   if especificacion == 'Zero':
@@ -51,7 +101,7 @@ def name2disp(especificacion):
   elif especificacion == 'AR':
     name2disp_ = 'AR'
 
-  # Variance model
+    # Variance model
   elif especificacion == arch_params:
     name2disp_ = 'ARCH'
   elif especificacion == garch_params:
@@ -66,8 +116,7 @@ def name2disp(especificacion):
     name2disp_ = 'APARCH'
   elif especificacion == figarch_params:
     name2disp_ = 'FIGARCH'
-
-  # Error distributions
+   # Error distributions
   elif especificacion == 'normal':
     name2disp_ = 'N'
   elif especificacion == 't':
@@ -81,54 +130,6 @@ def name2disp(especificacion):
     name2disp_ = 'Invalid specification'
 
   return name2disp_
-
-
-def signif_ast(coef, pvalues):
-    """Sets the confidence level in asterisks."""
- 
-  signif_ast = list()
-
-  for p in range(len(pvalues)):
-    if pvalues[p] <= 0.01:
-      asterisks = '***' # significant at 1%             
-    elif pvalues[p] <= 0.05:                
-      asterisks = '**'  # significant at 5%                   
-    elif pvalues[p] <= 0.1:
-      asterisks = '*'   # significant at 10%                    
-    else:
-      asterisks = ''    # not significant     
-
-    value = str(coef[p]) + asterisks # joins the coefficient and the asterisks
-
-    signif_ast.append(value)
-
-  signif_ast = pd.DataFrame(signif_ast, index = coef.index)
-  
-  return signif_ast  
-
-
-def signif_letter(coef, pvalues):
-    """Sets the confidence level in asterisks."""
-
-  signif_letter = list()
-
-  for p in range(len(pvalues)):
-    if pvalues[p] <= 0.01:
-      asterisks = '$^{a}$' # significant at 1%                
-    elif pvalues[p] <= 0.05:                
-      asterisks = '$^{b}$'  # significant at 5%                   
-    elif pvalues[p] <= 0.1:
-      asterisks = '$^{c}$'   # significant at 10%                
-    else:
-      asterisks = ''    # not significant       
-
-    value = str(coef[p]) + asterisks # joins the coefficient and the asterisks
-
-    signif_letter.append(value)
-  
-  signif_letter = pd.DataFrame(signif_letter, index = coef.index)
-
-  return signif_letter
 
 
 def model_info_fun(ts, mean, variance, dist):
@@ -149,27 +150,14 @@ def model_info_fun(ts, mean, variance, dist):
 
   return info
 
+######################################
+# Data collection and specifications #
+######################################
 
-###################
-# Data collection #
-###################
+path = "https://git.io/JX83R"
 
-path = 'https://git.io/JuGLW'
-
-# Stock market data
-stocks  = pd.read_excel(path, sheet_name = 'stocks_raw', index_col = 0)
-r_stocks = price2ret(stocks)
-
-# Forex market data  
-forex  = pd.read_excel(path, sheet_name = 'forex_raw', index_col = 0)
-r_forex = 100 * (np.log(forex) - np.log(forex.shift(1)))
-
-returns = r_forex.join(r_stocks)
-
-
-##################
-# Specifications #
-##################
+prices  = pd.read_excel(path, index_col = 0)
+returns = 100 * (np.log(prices) - np.log(prices.shift(1)))
 
 # Mean specifications
 
@@ -180,8 +168,8 @@ mean_ops       = ['Zero', 'Constant', 'AR']
 arch_params    = {'vol':'ARCH'}                               # ARCH
 garch_params   = {'p':1, 'q':1, 'vol':'GARCH'}                # GARCH  
 grj_params     = {'p':1, 'o':1, 'q':1, 'vol':'GARCH'}         # GRJ
-#tarch_params   = {'p':1, 'o':1, 'q':1, 'power':1.0}          # TARCH  (not included)
-#egarch_params  = {'p':1, 'q':1, 'o':1, 'vol': 'EGARCH'}      # EGARCH (not included)
+#tarch_params  = {'p':1, 'o':1, 'q':1, 'power':1.0}           # TARCH  (not included)
+#egarch_params = {'p':1, 'q':1, 'o':1, 'vol': 'EGARCH'}       # EGARCH (not included)
 aparch_params  = {'p':1, 'o':1, 'q':1, 'vol':'APARCH'}        # APARCH
 figarch_params = {'p':1, 'q':1, 'power':2.0, 'vol':'FIGARCH'} # FIGARCH
 
@@ -192,12 +180,8 @@ variance_ops  = [arch_params, garch_params, grj_params, aparch_params,
 
 dist_ops     = ['normal', 't', 'skewt', 'ged']
 
-
-# Almacenar resultados
 modelingVol_params_excel = pd.DataFrame()
-modelingVol_params_latex = pd.DataFrame()
-
-series_n = returns.shape[1] # number of series
+series_n = returns.shape[1] 
 
 #####################################
 # Results for each series and model #
@@ -214,7 +198,7 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         mdl = arch_model_v2(ts, mean = mean, **variance, dist = dist, 
                             rescale = False).fit(disp='off')
 
-        # Results if the model has a solution
+        # Results if the model has solution
         
         # Save summary models results
         with open("modelingVol_summary.txt", "a+") as file_object:
@@ -243,11 +227,7 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         # Singular Matrix (0 = the model could be estimated)
         singular_matrix = pd.Series('0', index = ['Singular Matrix'])
 
-        #  Result tables 
 
-        # Table for LaTeX (significancia con letras)
-        #to_latex = pd.concat([model_info, coef_letter, bic, loglik, singular_matrix]) 
-              
         # Table for Excel (significancia con asteriscos)
         to_excel = pd.concat([model_info,coef_ast, bic, loglik, singular_matrix]) 
 
@@ -265,7 +245,6 @@ for market, mean, variance, dist in product(returns.columns, mean_ops, variance_
         # Values for the other columns (parameters, BIC, etc) blank
         
         #  Results table
-        #to_latex = pd.concat([model_info, singular_matrix])
         to_excel = pd.concat([model_info, singular_matrix])
         
         
