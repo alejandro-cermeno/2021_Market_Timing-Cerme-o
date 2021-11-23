@@ -23,19 +23,12 @@ start_code = time() # start stopwatch
 class varbacktest:
     r"""
     Backtesting procedures for the Value at Risk (VaR)
-
     The following backtesting procedures can be specified using varbacktest:
+        * Traffic light (TL) test (*FORTCOMING*)
         * Unconditional coverage (UC) test 
         * Conditional coverage independence (CCI) test
         * Conditional Coverage (CC) test
         * Dynamic Quantile (DQ) test
-        
-     Additionally, work in progress includes:
-        * Traffic light (TL) test (*FORTCOMING*)
-        * Actual over Expected Ratio (AE) (*FORTCOMING*)
-        * Firm loss of Sarma et al. (2003) (*FORTCOMING*)
-        * Quadratic Loss of Lopez (1999) and Martens et al. (2009) (*FORTCOMING*)
-
     Parameters
     ----------
     returns : {ndarray, Series}
@@ -68,8 +61,8 @@ class varbacktest:
         #  raise ValueError("forecast_lags must be a positive integer")
 
     def serie_hits(self):
-      return (self.returns < self.VaR) * 1
-
+      return (self.returns < self.VaR) * 1   # <- Ardia et al. (2019) use
+      
 
     def num_hits(self):
       return self.serie_hits().sum()
@@ -95,7 +88,7 @@ class varbacktest:
         LRuc = -2 * N * np.log(self.alpha)
 
       dof = 1
-      PVuc = (1 - stats.chi2.cdf(LRuc, dof))
+      PVuc = 1 - stats.chi2.cdf(LRuc, dof)
 
       return pd.Series([LRuc, PVuc], index=["LRuc", "PVuc"], name = "UC")
 
@@ -115,30 +108,22 @@ class varbacktest:
       # Number of periods with no failures followed by a period with no failures
       n00 = (hits[1:][tr == 0] == 0).sum()
 
-      # Times in the states
-      n0  = n01 + n00 
-      n1 = n10 + n11
-      n = len(self.returns)
+      LogLNum = 0
+      if (n00 + n10) > 0 and (n01 + n11) > 0:
+        pUC = (n01 + n11) / (n00 + n01 + n10 + n11)
+        LogLNum = (n00 + n10) * np.log(1 - pUC) + (n01 + n11) * np.log(pUC)
 
-      # Probability of having a failure on period t, given that  there was no failure on period t-1
-      p01 = n01 / (n00 + n01)
-      # Probability of having a failure on period t, given that there was a failure on period t-1
-      p11 = n11 / (n11 + n10)
-      # Probability of having a failure on period t
-      p = n1 / n
+      LogLDen = 0
+      if n00 > 0 and n01 > 0:
+        p01 = n01 / (n00 + n01)
+        LogLDen = LogLDen + n00 * np.log(1 - p01) + n01 * np.log(p01)
+      if n10 > 0 and n11 > 0:
+        p11 = n11 / (n10 + n11)
+        LogLDen = LogLDen + n10 * np.log(1 - p11) + n11 * np.log(p11)
 
-      if n1 > 0:
-        cci_h0 = (n00 + n01) * np.log(1 - p) + (n01 + n11) * np.log(p)
-        cci_h1 = n00 * np.log(1 - p01) + n01 * np.log(p01) + n10 * np.log(1 -
-                                                                          p11)
-
-        if p11 > 0:
-          cci_h1 += n11 * np.log(p11)
-        
-        LRcci = -2 * (cci_h0 - cci_h1)
-        PVcci = (1 - stats.chi2.cdf(LRcci, 1))
-      else:
-        PVcci = np.nan
+      LRcci = -2 * (LogLNum - LogLDen)
+      dof = 1
+      PVcci = 1 - stats.chi2.cdf(LRcci, dof)
 
       return pd.Series([LRcci, PVcci], index = ["LRcci", "PVcci"], name = "CCI")
 
@@ -193,17 +178,16 @@ class varbacktest:
                          "obs":      len(self.returns),                    
                          "num_hits": self.num_hits(),
                          "pct_hits": [self.pct_hits()],
-                         "LRuc":     self.uc()["LRuc"],
-                         "PVuc":     self.uc()["PVuc"],
-                         "LRcci":    self.cci()["LRcci"],
-                         "PVcci":    self.cci()["PVcci"],
-                         "LRcc":     self.cc()["LRcc"],
-                         "PVcc":     self.cc()["PVcc"],
-                         "DQ":     self.dq()["DQ"],
-                         "PVdq":     self.dq()["PVdq"]
+                         "LRuc":     "{:.10f}".format(self.uc()["LRuc"]),
+                         "PVuc":     "{:.10f}".format(self.uc()["PVuc"]),
+                         "LRcci":    "{:.10f}".format(self.cci()["LRcci"]),
+                         "PVcci":    "{:.10f}".format(self.cci()["PVcci"]),
+                         "LRcc":     "{:.10f}".format(self.cc()["LRcc"]),
+                         "PVcc":     "{:.10f}".format(self.cc()["PVcc"]),
+                         "DQ":       "{:.10f}".format(self.dq()["DQ"]),
+                         "PVdq":     "{:.10f}".format(self.dq()["PVdq"])
                          })
       return df
-
 
     # (*FORTCOMING* traffic light test)
     #def tl(self)      
