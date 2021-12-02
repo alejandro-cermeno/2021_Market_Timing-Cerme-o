@@ -31,7 +31,7 @@ class varbacktest:
         * Traffic light (TL) test (*FORTCOMING*)
         * Unconditional coverage (UC) test
         * Conditional coverage independence (CCI) test
-        * Conditional Coverage (CC) test
+        * Conditional coverage (CC) test
         * Dynamic Quantile (DQ) test
     Additionally,
         * Actual over expected ratio
@@ -44,9 +44,10 @@ class varbacktest:
     returns : {ndarray, Series}
         Contains the returns values.
     VaR : {ndarray, Series}
-        Contains Value-at-Risk (VaR) values. Should be in the same units as the returns data.
+        Contains Value-at-Risk (VaR) values. Should be in the same units as the
+        returns data.
     alpha : float, optional
-        Contains the desired VaR confidence level. Default value is 0.05.
+        Contains the desired VaR significance level. Default value is 0.05.
     hit_lags : int, optional
         Description
     forecast_lags : int, optional
@@ -63,7 +64,9 @@ class varbacktest:
         self.forecast_lags = forecast_lags
 
         if len(returns) != len(VaR):
-            raise ValueError("Returns and VaR series must have the same lengths")
+            raise ValueError(
+                "Returns and VaR series must have the same lengths"
+                )
         # if not isinstance(hit_lags, int) or hit_lags >= 1:
         #  raise ValueError("hit_lags must be a positive integer")
         # if not isinstance(forecast_lags, int) or forecast_lags >= 1:
@@ -131,7 +134,13 @@ class varbacktest:
         dof = 1
         PVuc = 1 - stats.chi2.cdf(LRuc, dof)
 
-        return pd.Series([LRuc, PVuc], index=["LRuc", "PVuc"], name="UC")
+        if PVuc > self.alpha:
+          UC = 'accept'
+        else: 
+          UC = 'reject'
+
+        return pd.Series([LRuc, PVuc, UC], index=["LRuc", "PVuc", "UC"], 
+                         name="UC_test")
 
     def cci(self):
         """Conditional coverage independence test (CCI) of Christoffersen (1998)"""
@@ -165,7 +174,13 @@ class varbacktest:
         dof = 1
         PVcci = 1 - stats.chi2.cdf(LRcci, dof)
 
-        return pd.Series([LRcci, PVcci], index=["LRcci", "PVcci"], name="CCI")
+        if PVcci > self.alpha:
+          CCI = 'accept'
+        else: 
+          CCI = 'reject'
+
+        return pd.Series([LRcci, PVcci, CCI], index=["LRcci", "PVcci", "CCI"], 
+                         name="CCI_test")
 
     def cc(self):
         """Conditional coverage test (CC) of Christoffersen (1998)"""
@@ -177,7 +192,12 @@ class varbacktest:
         dof = 2
         PVcc = 1 - stats.chi2.cdf(LRcc, dof)
 
-        return pd.Series([LRcc, PVcc], index=["LRcc", "PVcc"], name="CC")
+        if PVcc > self.alpha:
+          CC = 'accept'
+        else: 
+          CC = 'reject'
+
+        return pd.Series([LRcc, PVcc, CC], index=["LRcc", "PVcc", "CC"], name="CC_test")
 
     def dq(self):
         """Dynamic quantile test (DQ) of Engle and Manganelli (2004)"""
@@ -200,15 +220,21 @@ class varbacktest:
                     x[:, 1 + p + j] = self.VaR[pq:]
 
             beta = np.dot(np.linalg.inv(np.dot(x.T, x)), np.dot(x.T, y))
-            DQ = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (
+            DQtest = np.dot(beta, np.dot(np.dot(x.T, x), beta)) / (
                 self.alpha * (1 - self.alpha)
             )
-            PVdq = 1 - stats.chi2.cdf(DQ, 1 + p + q)
+            PVdq = 1 - stats.chi2.cdf(DQtest, 1 + p + q)
 
         except:
-            DQ, PVdq = np.nan, np.nan
+            DQtest, PVdq = np.nan, np.nan
 
-        return pd.Series([DQ, PVdq], index=["DQ", "PVdq"], name="DQ")
+        if PVdq > self.alpha: 
+          DQ = 'accept'
+        else:
+          DQ = 'reject'
+
+        return pd.Series([DQtest, PVdq, DQ], index=["DQtest", "PVdq", "DQ"],
+                         name="DQ_test")
 
     def summary(self):
         """Run all implemented VaR backtests"""
@@ -221,12 +247,16 @@ class varbacktest:
                 "actual_expected": self.ae(),
                 "LRuc": self.uc()["LRuc"],
                 "PVuc": self.uc()["PVuc"],
+                "UC": self.uc()["UC"],
                 "LRcci": self.cci()["LRcci"],
                 "PVcci": (self.cci()["PVcci"]),
+                "CCI": (self.cci()["CCI"]),
                 "LRcc": (self.cc()["LRcc"]),
                 "PVcc": (self.cc()["PVcc"]),
-                "DQ": (self.dq()["DQ"]),
+                "CC": (self.cc()["CC"]),
+                "DQtest": (self.dq()["DQtest"]),
                 "PVdq": (self.dq()["PVdq"]),
+                "DQ": (self.dq()["DQ"]),
                 "firm_loss": (self.firm_loss()),
                 "quadratic_loss": (self.quadratic_loss()),
                 "tick_loss": (self.tick_loss()),
