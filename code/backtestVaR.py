@@ -11,8 +11,6 @@ numpy, pandas, scipy, datetime, itertools and sklearn.metrics are required.
 See README.txt for additional information.
 '''
 
-!pip install xlsxwriter
-
 import xlsxwriter
 import numpy as np
 import pandas as pd 
