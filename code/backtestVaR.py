@@ -1,15 +1,19 @@
 '''
 backtestVaR.py
+
 Alejandro Cermeño (09/2021)
 
 The code applies the backtest procedures of Kupiec (1995), Christoffesen (1998)
 and Engle and Manganelli (2004) for VaR at 99%, 95% confidence level. The MAE 
-and MSE are also calculated for the volatility forecasts. time, numpy, pandas, 
-scipy, datetime, itertools and sklearn.metrics are required.
+and MSE are also calculated for the volatility forecasts. xlsxwriter, time, 
+numpy, pandas, scipy, datetime, itertools and sklearn.metrics are required.
 
 See README.txt for additional information.
 '''
 
+!pip install xlsxwriter
+
+import xlsxwriter
 import numpy as np
 import pandas as pd 
 from time import time
@@ -73,7 +77,7 @@ class varbacktest:
         #  raise ValueError("forecast_lags must be a positive integer")
 
     def serie_hits(self):
-        return (self.returns < self.VaR) * 1  # <- Ardia et al. (2019) use
+        return (self.returns < self.VaR) * 1  
 
     def num_hits(self):
         return self.serie_hits().sum()
@@ -81,7 +85,7 @@ class varbacktest:
     def pct_hits(self):
         return self.serie_hits().mean()
 
-    def ae(self):
+    def actual_expected(self):
         """Actual over expected ratio"""
         N = len(self.returns)  # Number of observation
         x = self.num_hits()  # Number of failures
@@ -244,7 +248,7 @@ class varbacktest:
                 "obs": len(self.returns),
                 "num_hits": self.num_hits(),
                 "pct_hits": [self.pct_hits()],
-                "actual_expected": self.ae(),
+                "actual_expected": self.actual_expected(),
                 "LRuc": self.uc()["LRuc"],
                 "PVuc": self.uc()["PVuc"],
                 "UC": self.uc()["UC"],
@@ -265,84 +269,124 @@ class varbacktest:
         return df
 
 
-# Function
-
-def export(df, file_name, excel = None, latex = None):
-
-  # To Excel
-  if excel == True:
-    df.to_excel(file_name + '.xlsx')  
-        
-  # To LaTeX
-  if latex == True:
-    latex_code = df.to_latex()
-    with open(file_name + '.tex', 'w') as tex:
-      tex.write(latex_code)
-
-
 ######################################
 # Data collection and specifications #
 ######################################
 
-path = "/content/SPBLPGPT_forecastVolVaR_4853_OOS.xlsx"
-df = pd.read_excel(path, index_col = 0)
+serie_name_ops = ["ARS", "BRL", "IBOV", "IPSA", "MEXBOL", "PEN", "SPBLPGPT"]
 
-#df['VaR_1'] = df['VaR_1'].apply(lambda x: x*-1)
-#df['VaR_5'] = df['VaR_5'].apply(lambda x: x*-1)
+# The forecasted VaR series for each security are located in a open access 
+# file in Drive. The ID's to import each dataset are the following:
 
-# specifications
+ids_ops = ["1_XdPNEUjK-HGkZ_5W03UdCqQ3tlESlCw",   # ARS
+            "1_Y2SFQ8q1qYzA9TZkatBrWGu5Qgu9MgA",  # BRL
+            "1_PcbSMaqsy7n0MX4LJAfaXApvuvw7JII",  # IBOV
+            "1bwPZ5_wzJbM0lA9HVHFLSFfNqGDNKfmV",  # IPSA
+            "1_Uw9Fs21ARZdceeXP7uGZTvttn20Yw51",  # MEXBOL
+            "1bc0CUUaSfuSO7FuHTdTJxRxOQlhGwN8e",  # PEN
+            "1bx7WjCSCnlMeGT7YZTORIeneCHUrECRo"   # SPBLPGPT
+            ]
 
-mean_ops = df['mean'].unique()
-variance_ops = df['variance'].unique()
-dist_ops = df['dist'].unique()
-VaR_ops = ['VaR_1', 'VaR_5']
-conf_lvl_ops = [0.01, 0.05]
+results = pd.DataFrame() # store 
 
-backtestVaR = pd.DataFrame() 
+# For each downloaded security
+for i in range(len(ids_ops)):
+  globals()[serie_name_ops[i]] = pd.read_excel(
+      "https://drive.google.com/uc?export=download&id=" + ids_ops[i],
+      index_col = 0
+      )
+  
+  df = globals()[serie_name_ops[i]]
 
-for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
+  # specifications
+  mean_ops = df['mean'].unique()
+  variance_ops = df['variance'].unique()
+  dist_ops = df['dist'].unique()
+  VaR_ops = ['VaR_1', 'VaR_5']
+  conf_lvl_ops = [0.01, 0.05]
 
-  filtered = df[(df['mean'] == mean) &
-                (df['variance'] == variance) &
-                (df['dist'] == dist)]
+  # For each model mean-variance-dist
+  for mean, variance, dist in product(mean_ops, variance_ops, dist_ops):
 
-  ##############################
-  # Backtest and other metrics #
-  ##############################
+    filtered = df[(df['mean'] == mean) &
+                  (df['variance'] == variance) &
+                  (df['dist'] == dist)]
 
-  returns = filtered['mean_true']
-  vol_true = filtered['vol_true'].values
-  vol_pred = filtered['vol_pred'].values
+    ##############################
+    # Backtest and other metrics #
+    ##############################
 
-  mse = mean_squared_error(vol_true, vol_pred)  # MSE 
-  mae = mean_absolute_error(vol_true, vol_pred) # MAE
+    returns = filtered['mean_true']
+    vol_true = filtered['vol_true'].values
+    vol_pred = filtered['vol_pred'].values
 
-  # For each confidence level 
-  for i in range(len(VaR_ops)):
+    mse = mean_squared_error(vol_true, vol_pred)  # MSE for volatility forecast
+    mae = mean_absolute_error(vol_true, vol_pred) # MAE for volatility forecast
 
-    bt = varbacktest(returns,
-                     VaR = filtered[VaR_ops[i]], # Select column 'VaR_1' or 'VaR_5' 
-                     alpha = conf_lvl_ops[i]
-                     )
+    # For each confidence level 
+    for i in range(len(VaR_ops)):
 
-    # Results table
-    add = pd.concat([pd.DataFrame({"serie": filtered['serie'].unique(),
-                                      "mean": mean,
-                                      "variance": variance,
-                                      "dist": dist,
-                                      "mae": mae,
-                                      "mse": mse}),
-                     bt.summary()],
-                     axis = 1)      
-        
-    backtestVaR = backtestVaR.append(add)
+      bt = varbacktest(returns,
+                      VaR = filtered[VaR_ops[i]], # Select column 'VaR_1' or 'VaR_5' 
+                      alpha = conf_lvl_ops[i]
+                      )
 
-# The results are exported
-export(backtestVaR, 'backtestVaR_' + df['serie'].unique()[0], excel = True)
+      # Results table
+      add = pd.concat([pd.DataFrame({"serie": filtered['serie'].unique(),
+                                        "mean": mean,
+                                        "variance": variance,
+                                        "dist": dist,
+                                        "mae": mae,
+                                        "mse": mse}),
+                      bt.summary()],
+                      axis = 1)      
+          
+      results = results.append(add)
+
+####################
+# Backtest summary #
+####################
+
+# A table will be made that summarizes the results from the DataFrame "results",
+# which contains the full output.
+
+summary = pd.DataFrame()
+
+for serie_name, conf_lvl in product(serie_name_ops, conf_lvl_ops):
+
+  filtered = results[(results["serie"] == serie_name) &
+                    (results["VaR_lvl"] == conf_lvl)]
+
+  n_models = (len(filtered["mean"].unique()) * 
+              len(filtered["variance"].unique()) *
+              len(filtered["dist"].unique()))
+  UC_n_rejects = ((filtered["UC"] == "accept") * 1).sum()
+  CCI_n_rejects = ((filtered["CCI"] == "accept") * 1).sum()
+  CC_n_rejects = ((filtered["CC"] == "accept") * 1).sum()
+  DQ_n_rejects = ((filtered["DQ"] == "accept") * 1).sum()
+
+  # Summary table
+  add = pd.DataFrame({"serie": serie_name, 
+                          "VaR_lvl": [conf_lvl],
+                          "n_models": [n_models],
+                          "UC_n_rejects": [UC_n_rejects],
+                          "CCI_n_rejects": [CCI_n_rejects],
+                          "CC_n_rejects": [CC_n_rejects],
+                          "DQ_n_rejects": [DQ_n_rejects]})
+  summary = summary.append(add)
+
+##################
+# Export results #
+##################
+
+with pd.ExcelWriter('backtestVaR.xlsx') as writer:  
+    summary.to_excel(writer, sheet_name='summary')
+    results.to_excel(writer, sheet_name='results')
 
 end_code = time() # end stopwatch 
 time_code = str(timedelta(seconds = round(end_code - 
-                                          start_code))) # Execution time
+                                            start_code))) # Execution time
 
-print('backtestVaR_' + df['serie'].unique()[0] + '.xlsx successfully saved')
-print('Execution completed')
+print("")
+print("Execution completed")
+print("Execution time: ", time_code)
