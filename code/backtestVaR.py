@@ -366,10 +366,10 @@ for serie_name, conf_lvl in product(serie_name_ops, conf_lvl_ops):
   add = pd.DataFrame({"serie": serie_name, 
                           "VaR_lvl": [conf_lvl],
                           "n_models": [n_models],
-                          "UC_n_rejects": [UC_n_accept],
-                          "CCI_n_rejects": [CCI_n_accept],
-                          "CC_n_rejects": [CC_n_accept],
-                          "DQ_n_rejects": [DQ_n_accept]})
+                          "UC_n_accept": [UC_n_accept],
+                          "CCI_n_accept": [CCI_n_accept],
+                          "CC_n_accept": [CC_n_accept],
+                          "DQ_n_accept": [DQ_n_accept]})
   summary = summary.append(add)
 
 ##################
