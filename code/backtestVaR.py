@@ -5,13 +5,12 @@ Alejandro Cermeño (09/2021)
 
 The code applies the backtest procedures of Kupiec (1995), Christoffesen (1998)
 and Engle and Manganelli (2004) for VaR at 99%, 95% confidence level. The MAE 
-and MSE are also calculated for the volatility forecasts. xlsxwriter, time, 
-numpy, pandas, scipy, datetime, itertools and sklearn.metrics are required.
+and MSE are also calculated for the volatility forecasts. time, numpy, pandas,
+scipy, datetime, itertools and sklearn.metrics are required.
 
 See README.txt for additional information.
 '''
 
-import xlsxwriter
 import numpy as np
 import pandas as pd 
 from time import time
