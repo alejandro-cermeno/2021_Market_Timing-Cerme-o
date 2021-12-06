@@ -357,19 +357,19 @@ for serie_name, conf_lvl in product(serie_name_ops, conf_lvl_ops):
   n_models = (len(filtered["mean"].unique()) * 
               len(filtered["variance"].unique()) *
               len(filtered["dist"].unique()))
-  UC_n_rejects = ((filtered["UC"] == "accept") * 1).sum()
-  CCI_n_rejects = ((filtered["CCI"] == "accept") * 1).sum()
-  CC_n_rejects = ((filtered["CC"] == "accept") * 1).sum()
-  DQ_n_rejects = ((filtered["DQ"] == "accept") * 1).sum()
+  UC_n_accept = ((filtered["UC"] == "accept") * 1).sum()
+  CCI_n_accept = ((filtered["CCI"] == "accept") * 1).sum()
+  CC_n_accept = ((filtered["CC"] == "accept") * 1).sum()
+  DQ_n_accept = ((filtered["DQ"] == "accept") * 1).sum()
 
   # Summary table
   add = pd.DataFrame({"serie": serie_name, 
                           "VaR_lvl": [conf_lvl],
                           "n_models": [n_models],
-                          "UC_n_rejects": [UC_n_rejects],
-                          "CCI_n_rejects": [CCI_n_rejects],
-                          "CC_n_rejects": [CC_n_rejects],
-                          "DQ_n_rejects": [DQ_n_rejects]})
+                          "UC_n_rejects": [UC_n_accept],
+                          "CCI_n_rejects": [CCI_n_accept],
+                          "CC_n_rejects": [CC_n_accept],
+                          "DQ_n_rejects": [DQ_n_accept]})
   summary = summary.append(add)
 
 ##################
