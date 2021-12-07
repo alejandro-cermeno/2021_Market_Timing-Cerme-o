@@ -28,6 +28,7 @@ start_code = time() # start stopwatch
 class varbacktest:
     r"""
     Backtesting procedures for the Value at Risk (VaR)
+    
     The following backtesting procedures can be specified using varbacktest:
         * Traffic light (TL) test (*FORTCOMING*)
         * Unconditional coverage (UC) test
@@ -50,9 +51,18 @@ class varbacktest:
     alpha : float, optional
         Contains the desired VaR significance level. Default value is 0.05.
     hit_lags : int, optional
-        Description
+        Hit lags for the DQ test. Default value is 4 as in Engle and Manganelli (2004).
     forecast_lags : int, optional
-        Description
+        Forecast lags for the DQ test. Default value is 1.
+        
+    Notes
+    -----
+    The terms "accept" and "reject" are used for convenience in the backtest tests, 
+    technically these does not accept a model. Rather, the test fails to reject it.
+    
+    References
+    ----------
+    (*to be added*)
     """
 
     def __init__(self, returns, VaR, alpha=0.05, hit_lags=4, forecast_lags=1):
