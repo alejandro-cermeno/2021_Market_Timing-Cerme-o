@@ -20,8 +20,7 @@ country.
   * descriptiveStats.py: descriptive statistics for stock and Forex markets returns. Replicates table 1.
   * modelingVol_params.py: procedure to estimated parameters. Replicates table 2.
   * forecastVolVaR.py: forecast one day ahead VaR at 99%, 95% confidence through a suit of ARCH-type models.
-  * backtestVaR.py: applies a suite of backtest procedures for VaR at 99%, 95% confidence level. The MAE and MSE are also calculated for the volatility forecasts. Replicates table 3.
-  * arch_model_v2.py: an adaptation of the arch_model() function in ARCH package by the Sheppard (2021) to the needs of this research.
+  * backtestVaR.py: applies a suite of backtest procedures for forecasted VaR. The MAE and MSE are also calculated for the volatility forecasts. Replicates table 3.
 
 * output: full obtained outputs
   * descriptiveStats.lyx: Table 1 Descriptive Statistics for Stock and Forex Markets Returns
