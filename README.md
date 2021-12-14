@@ -19,18 +19,19 @@ country.
   * data.xlsx: source data used as obtained from Bloomberg.
   * descriptiveStats.py: descriptive statistics for stock and Forex markets returns. Replicates table 1.
   * modelingVol_params.py: procedure to estimated parameters. Replicates table 2.
-  * forecastVolVaR.py: forecast one day ahead VaR at 99%, 95% confidence through a suit of ARCH-type models.
-  * backtestVaR.py: applies a suite of backtest procedures for forecasted VaR. The MAE and MSE are also calculated for the volatility forecasts. Replicates table 3.
+  * forecastVolVaR.py: forecast one day ahead VaR at 99% and 95% confidence through a suit of ARCH-type models.
+  * backtestVaR.py: applies a suite of backtest procedures for forecasted VaR. Replicates table 3. Also, the MAE and MSE are calculated for the volatility forecasts. 
 
 * output: full obtained outputs
   * descriptiveStats.lyx: Table 1 Descriptive Statistics for Stock and Forex Markets Returns
-  * modelingVol_params.xlsx: full Table 2 Estimated Parameters for daily Latin American Stock and Forex Markets Return
-  * backtestVaR.xlsx: full Table 3 Accuracy of VaR predictions for Stock and Forex Markets Returns
+  * modelingVol_params.xlsx: full Table 2 and Table 3 Estimated Parameters for daily Latin American Stock and Forex Markets Return
+  * backtestVaR.xlsx: full Table 4 and 5 Accuracy of VaR predictions for Stock and Forex Markets Returns
   * forecastVolVaR.rar: full volatility and VaR forecasts for each series. Not included because it is very heavy. Available in https://drive.google.com/file/d/1_ExWrolC-KZ8x5QnKZXrcNGr-uKWj1uK/view?usp=sharing.
+  
 * varbacktest_test: Verify that the `varbacktest()` class is well implemented by comparing results with those of MATLAB and R.
   * toyserie.xlsx
   * varbacktest_testMATLAB.m
-  * varbacktest_testPYTHON.py
+  * varbacktest_testPYTHON.py: source code of the `varbacktest()` class
   * varbacktest_testR.R
 * draft.pdf
 * slides.pdf
